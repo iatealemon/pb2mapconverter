@@ -141,3 +141,16 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Ignore the entire .vscode folder by default
+.vscode/*
+
+# Keep specific configuration files for team consistency
+!.vscode/extensions.json
+!.vscode/tasks.json
+
+# Keep launch configurations (only if free of personal secrets)
+!.vscode/launch.json
+
+# Keep shared settings (only if free of local machine paths)
+!.vscode/settings.json
