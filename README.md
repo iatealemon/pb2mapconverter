@@ -38,26 +38,26 @@ you can see the scripts in `package.json` for other commands but these are the m
     2. We map each PB2/3 object into the corresponding javascript code and JSON editor object.
     3. We concantenate these object into one string along with an appropriate default header and footer.
 
-### Caveats
-
-- Most of the spacing in the resulting serialized source code matters. Here's an example.
+For an example, a PB2 wall results in this line of code in PB3.
 
 ```js
 pb2GameWorld.CreateBoxShape({ x: 0, y: 0, w: 10, h: 10, type: pb2Shape.WALL }); //->Ditto->//{"operation":"create","constructor":"pb2GameWorld.CreateBoxShape","x":"0","y":"0","w":"10","h":"10","m":"null","wc":"null","type":"pb2Shape.WALL","corner":"pb2Shape.CORNER_NONE","dots":"null","_points_being_edited":false,"_visible":"1","_locked":"0","_disabled":"0","id":""}
 ```
 
-No spacing between Ditto, code and JSON.. spacing in the javascript code.. etc..
+### Caveats
 
+- Most of the spacing in the resulting serialized source code matters. Take a good close look at the previous example.
+  No spacing between Ditto, code and JSON.. spacing in the javascript code.. etc..
 - Property numbers in JSON editor object should actually be stored as a string. For an example,
 
-```
-    const editor_object = {
-        /* .... */
-        // must be string! the resulting source code must have the value wrapped in quotation marks.
-        x: pb2Wall.geometry.x.toString(),
-        y: pb2Wall.geometry.y.toString(),
-        w: pb2Wall.geometry.w.toString(),
-        h: pb2Wall.geometry.h.toString(),
-        /* .... */
-    };
+```js
+const editor_object = {
+    /* .... */
+    // must be string! the resulting source code must have the value wrapped in quotation marks.
+    x: pb2Wall.geometry.x.toString(),
+    y: pb2Wall.geometry.y.toString(),
+    w: pb2Wall.geometry.w.toString(),
+    h: pb2Wall.geometry.h.toString(),
+    /* .... */
+};
 ```
