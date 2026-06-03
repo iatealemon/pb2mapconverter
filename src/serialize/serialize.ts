@@ -7,6 +7,7 @@
     We keep track of mappings between PB2 objects and these 2 (js code and JSON) here.
 
     Refer to ./docs/levelEditor.docs.js to see Eric's implementation of the toolbar - for mapping between the respective PB2 objects.
+    (though it seems like the file is wrong!)
 */
 
 // Standard map header that downloads Eric's basic trigger preset module and enable player assignment logic.
