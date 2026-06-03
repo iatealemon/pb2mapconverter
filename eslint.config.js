@@ -2,7 +2,6 @@
 
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
-import perfectionist from 'eslint-plugin-perfectionist';
 import vitest from '@vitest/eslint-plugin';
 
 export default tseslint.config(
@@ -20,7 +19,18 @@ export default tseslint.config(
             },
         },
     },
-    perfectionist.configs['recommended-natural'],
+    {
+        rules: {
+            '@typescript-eslint/restrict-template-expressions': [
+                'error',
+                {
+                    allowNumber: true,
+                    allowBoolean: true,
+                    allowNullish: true,
+                },
+            ],
+        },
+    },
     {
         files: ['**/*.test.ts', '**/*.spec.ts'],
         plugins: {
@@ -29,6 +39,14 @@ export default tseslint.config(
         rules: {
             ...vitest.configs.recommended.rules,
             '@typescript-eslint/unbound-method': 'off',
+            '@typescript-eslint/restrict-template-expressions': [
+                'error',
+                {
+                    allowNumber: true,
+                    allowBoolean: true,
+                    allowNullish: true,
+                },
+            ],
         },
     },
 );

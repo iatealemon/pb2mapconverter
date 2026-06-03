@@ -7,9 +7,8 @@ import type { Multer } from 'multer';
 
 import express from 'express';
 import multer from 'multer';
-import { parseStringPromise } from 'xml2js';
 
-import convertPB2XMLFile from '#convert.js';
+import processPB2XMLFile from '#process.js';
 
 const app = express();
 const port = process.env.PORT ?? '9001';
@@ -34,12 +33,8 @@ app.post('/upload', upload.single('file'), async (req: Request, res: Response) =
         // Read the file content
         const fileContent = req.file.buffer.toString('utf-8');
 
-        // Try to parse as XML (i disabled ESlint here cause.. it's an unknown data structure..)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const xmlFile = await parseStringPromise(fileContent);
-
         // Process the PB2 XML file into PB3 source code in a form of a string (may fail)
-        const result = convertPB2XMLFile(xmlFile);
+        const result = await processPB2XMLFile(fileContent);
 
         if (!result) {
             return res.status(400).json({
