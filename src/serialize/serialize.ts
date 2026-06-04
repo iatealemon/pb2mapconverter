@@ -22,9 +22,9 @@ export const PB3StandardFooter = `pb2GameWorld.FinalizeWorld();}//->Ditto->//{"x
 // Removes empty spaces and new lines.. because PB3 is strict about spacing.
 // Also adds '//->Ditto->//' before returning a valid source string.
 export const toPB3String = ({ code, jsonObject }: { code: string; jsonObject: string }): string => {
-    let finalString = code.replace(/\s/g, '');
-    finalString += '//->Ditto->//';
-    finalString += jsonObject.replace(/\s/g, '') + '\n';
+	let finalString = code.replace(/[\r\t]|\n */g, '').replace(/ +/g, ' ');
+	finalString += '//->Ditto->//';
+	finalString += jsonObject.replace(/[\r\t]|\n */g, '').replace(/ +/g, ' ') + '\n';
 
-    return finalString;
+	return finalString;
 };

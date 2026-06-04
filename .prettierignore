@@ -15,3 +15,6 @@ node_modules/
 
 # Ignore test input maps
 src/__tests__/maps/**
+
+# I want my tab aligned walls.
+src/utils/surface.ts

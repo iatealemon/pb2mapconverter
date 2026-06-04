@@ -61,3 +61,7 @@ const editor_object = {
     /* .... */
 };
 ```
+
+### Limitations
+
+There's no one to one correlation between PB2 wall material and PB3 surfaces. The closest surface type is PB2 platform wall.
