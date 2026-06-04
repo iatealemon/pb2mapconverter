@@ -14,6 +14,15 @@ export interface PB2Wall {
 	materialIndex: number;
 }
 
+// --- PB2 Background ---
+export interface PB2Background {
+	geometry: Geometry;
+	backgroundMaterialIndex: number;
+	textureXOffset: number;
+	textureYOffset: number;
+	drawInFront: boolean;
+}
+
 // ===============================================
 // Derived PB3 Objects
 // ===============================================
