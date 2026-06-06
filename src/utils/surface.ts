@@ -27,8 +27,33 @@ const pb2WallMaterialToSurfaceInfo: Record<number, SurfaceInfo> = {
     [-1]:   { surfaceName: 'metal_slice',                   surfaceType: 'pb2SurfaceType.TYPE_PB2PLATFORM_WALL',   surfaceTerrain: 'Black'     },  // Black
 } as const;
 
+const pb2BackgroundMaterialToSurfaceInfo: Record<number, SurfaceInfo> = {
+    0:      { surfaceName: 'mat_panel_tile',                surfaceType: 'pb2SurfaceType.TYPE_SIMPLE_BACKGROUND',   surfaceTerrain: 'Ground'    },  // Basic
+    1:      { surfaceName: 'ground_tile',                   surfaceType: 'pb2SurfaceType.TYPE_SIMPLE_BACKGROUND',   surfaceTerrain: 'Ground'    },  // Ground
+    2:      { surfaceName: 'mat_panel2_tile',               surfaceType: 'pb2SurfaceType.TYPE_SIMPLE_BACKGROUND',   surfaceTerrain: 'Ground'    },  // Usurpation
+    3:      { surfaceName: 'mat_white',                     surfaceType: 'pb2SurfaceType.TYPE_SIMPLE_BACKGROUND',   surfaceTerrain: 'Ground'    },  // White
+    4:      { surfaceName: 'mat_slider_tile',               surfaceType: 'pb2SurfaceType.TYPE_SIMPLE_BACKGROUND',   surfaceTerrain: 'Ground'    },  // Elevator Path
+    5:      { surfaceName: 'mat_panel3_tile',               surfaceType: 'pb2SurfaceType.TYPE_SIMPLE_BACKGROUND',   surfaceTerrain: 'Ground'    },  // Impure Canal
+    6:      { surfaceName: 'mat_white',                     surfaceType: 'pb2SurfaceType.TYPE_SIMPLE_BACKGROUND',   surfaceTerrain: 'Red'       },  // Red
+    7:      { surfaceName: 'mat_white',                     surfaceType: 'pb2SurfaceType.TYPE_SIMPLE_BACKGROUND',   surfaceTerrain: 'Green'     },  // Green
+    8:      { surfaceName: 'mat_white',                     surfaceType: 'pb2SurfaceType.TYPE_SIMPLE_BACKGROUND',   surfaceTerrain: 'Blue'      },  // Blue
+    9:      { surfaceName: 'mat_panel4_tile',               surfaceType: 'pb2SurfaceType.TYPE_SIMPLE_BACKGROUND',   surfaceTerrain: 'Ground'    },  // Damned
+    10:     { surfaceName: 'mat_plate1_bg',                 surfaceType: 'pb2SurfaceType.TYPE_SIMPLE_BACKGROUND',   surfaceTerrain: 'Ground'    },  // Panel Default
+    11:     { surfaceName: 'mat_plate2_bg',                 surfaceType: 'pb2SurfaceType.TYPE_SIMPLE_BACKGROUND',   surfaceTerrain: 'Ground'    },  // Panel Bright
+    12:     { surfaceName: 'mat_plate3_bg',                 surfaceType: 'pb2SurfaceType.TYPE_SIMPLE_BACKGROUND',   surfaceTerrain: 'Ground'    },  // Panel Dark
+    13:     { surfaceName: 'mat_panel8_tile',               surfaceType: 'pb2SurfaceType.TYPE_SIMPLE_BACKGROUND',   surfaceTerrain: 'Ground'    },  // Rocks
+    14:     { surfaceName: 'platform_texture_dark',         surfaceType: 'pb2SurfaceType.TYPE_PLATFORM_WALL',       surfaceTerrain: 'Ground'    },  // Pixel Wall (No equivalent)
+    15:     { surfaceName: 'platform_texture_dark',         surfaceType: 'pb2SurfaceType.TYPE_PLATFORM_WALL',       surfaceTerrain: 'Ground'    },  // Pixel Background (No equivalent)
+    16:     { surfaceName: 'platform_texture_dark',         surfaceType: 'pb2SurfaceType.TYPE_PLATFORM_WALL',       surfaceTerrain: 'Ground'    },  // Pixel Open Door (No equivalent)
+} as const;
+
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const defaultWallSurfaceInfo = pb2WallMaterialToSurfaceInfo[0]!;     
+
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const defaultBackgroundSurfaceInfo = pb2BackgroundMaterialToSurfaceInfo[0]!;     
+
+export const pb2ShadowBackgroundMaterial = -1;
 
 export const createPB2WallSurface = (materialIndex: number, count: number): PB3Surface => {
     const wallSurfaceInfo = pb2WallMaterialToSurfaceInfo[materialIndex] ?? defaultWallSurfaceInfo;
@@ -39,4 +64,15 @@ export const createPB2WallSurface = (materialIndex: number, count: number): PB3S
         count: count
     }
 }
+
+export const createPB2BackgroundSurface = (materialIndex: number, count: number): PB3Surface => {
+    const backgroundSurfaceInfo = pb2BackgroundMaterialToSurfaceInfo[materialIndex] ?? defaultBackgroundSurfaceInfo;
+
+    return {
+        ...backgroundSurfaceInfo,
+        uid: `backgroundSurface${count}`,
+        count: count
+    }
+}
+
 

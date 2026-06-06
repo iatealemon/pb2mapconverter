@@ -7,14 +7,15 @@
     This is useful in a way to process and handle constraints like asset requirements,
     triggers, etc..
 */
-import type { PB2Wall, PB2Background, PB3Surface } from '#pb2Objects.js';
 import type { ParsedPB2XMLObject, WorldBoundary } from '#utils/types.js';
+import type { PB2Wall, PB2Background, PB3Surface, BackgroundIdentifierStr } from '#pb2Objects.js';
 
-import { parseGeometry, updateWorldBoundary } from '#utils/types.js';
+import { getBackgroundKey } from '#pb2Objects.js';
+import { halfHexColor, isValidHexCode, parseGeometry, updateWorldBoundary } from '#utils/types.js';
 import { PB3StandardFooter, PB3StandardMapHeader } from '#serialize/serialize.js';
 import { serializePB2Wall } from '#serialize/wall.js';
-import { createPB2WallSurface } from '#utils/surface.js';
-import { serializePB3Surface } from '#serialize/surface.js';
+import { createPB2BackgroundSurface, createPB2WallSurface, pb2ShadowBackgroundMaterial } from '#utils/surface.js';
+import { serializePB3Surface, SurfaceType } from '#serialize/surface.js';
 import { serializePB2Background } from '#serialize/background.js';
 
 export class PB2Map {
@@ -24,9 +25,9 @@ export class PB2Map {
 	private backgrounds: PB2Background[] = [];
 
 	// Derived PB3 Objects.. (assets, execute method, comments, etc..)
-	private wallSurfaces: Record<number, PB3Surface> = {}; // maps every unique PB2 wall material (an id) with a created wall surface.
-	private backgroundSurfaces: Record<number, PB3Surface> = {}; // maps every unique PB2 background material (an id) with a created background surface.
-
+	private wallSurfaces: Record<number, PB3Surface> = {}; 							// maps every unique PB2 wall material (an id) with a created wall surface.
+	private backgroundSurfaces: Record<BackgroundIdentifierStr, PB3Surface> = {}; 	// maps every unique PB2 background material + color mult with a created background surface.
+																	
 	// Metadata
 	private worldBoundary: WorldBoundary = { min: { x: Infinity, y: Infinity }, max: { x: -Infinity, y: -Infinity } };
 
@@ -58,7 +59,11 @@ export class PB2Map {
 
 		// Order matters..
 		for (const [_, wallSurface] of Object.entries(this.wallSurfaces)) {
-			pb3SourceCode += serializePB3Surface(wallSurface, true, this.worldBoundary);
+			pb3SourceCode += serializePB3Surface(wallSurface, SurfaceType.Wall, this.worldBoundary);
+		}
+
+		for (const [_, backgroundSurface] of Object.entries(this.backgroundSurfaces)) {
+			pb3SourceCode += serializePB3Surface(backgroundSurface, SurfaceType.Background, this.worldBoundary);
 		}
 
 		for (const wall of this.walls) {
@@ -66,7 +71,7 @@ export class PB2Map {
 		}
 
 		for (const background of this.backgrounds) {
-			pb3SourceCode += serializePB2Background(background);
+			pb3SourceCode += serializePB2Background(background, this.backgroundSurfaces);
 		}
 
 		pb3SourceCode += PB3StandardFooter;
@@ -101,14 +106,27 @@ export class PB2Map {
 		return walls;
 	};
 
+	// Parses a given PB2 xml object into PB2 background.
+	// When parsing PB2 background, also keep track of world boundary and required surface (material and color multiplier).
 	private parsePB2Background = (pb2Objects: ParsedPB2XMLObject[]): PB2Background[] => {
 		const backgrounds: PB2Background[] = [];
 
-		// let surfaceCount = 0;
+		let surfaceCount = 0;
 
 		for (const pb2Object of pb2Objects) {
 			const geometry = parseGeometry(pb2Object);
 			const materialIndex = Number(pb2Object.$.m ?? 0);
+
+			// PB2 had a -1 shadow material type for their shadow map.
+			// We don't support this background in PB3.
+			if (materialIndex === pb2ShadowBackgroundMaterial) {
+				continue;
+			}
+
+			const colorMultiplier = pb2Object.$.c && isValidHexCode(pb2Object.$.c) ? halfHexColor(pb2Object.$.c) : "#FFFFFF";
+
+			// We use a combination of material id and color multiplier as a unique key to an associated surface.
+			const backgroundIdentifierStr = getBackgroundKey({ materialId: materialIndex, colorMultiplier: colorMultiplier });
 
 			backgrounds.push({
 				geometry: geometry,
@@ -116,15 +134,16 @@ export class PB2Map {
 				textureXOffset: Number(pb2Object.$.u ?? 0),
 				textureYOffset: Number(pb2Object.$.v ?? 0),
 				drawInFront: Boolean(pb2Object.$.f ?? false),
+				surfaceKey: backgroundIdentifierStr
 			});
 
 			updateWorldBoundary(this.worldBoundary, geometry);
 
-			// has this material id been created?
-			// if (!(materialIndex in this.wallSurfaces)) {
-			// 	this.wallSurfaces[materialIndex] = createPB2WallSurface(materialIndex, surfaceCount);
-			// 	++surfaceCount;
-			// }
+			// has this unique combination of material id and color multiplier found?
+			if (!(backgroundIdentifierStr in this.backgroundSurfaces)) {
+				this.backgroundSurfaces[backgroundIdentifierStr] = createPB2BackgroundSurface(materialIndex, surfaceCount);
+				++surfaceCount;
+			}
 		}
 
 		return backgrounds;

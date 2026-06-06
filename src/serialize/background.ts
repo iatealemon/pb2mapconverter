@@ -1,8 +1,8 @@
-import type { PB2Background } from '#pb2Objects.js';
+import type { BackgroundIdentifierStr, PB2Background, PB3Surface } from '#pb2Objects.js';
 import { toPB3String } from './serialize.js';
 
-export const serializePB2Background = (pb2Background: PB2Background): string => {
-	const surfaceUID = 'null';
+export const serializePB2Background = (pb2Background: PB2Background, materialIndexToSurface: Record<BackgroundIdentifierStr, PB3Surface>): string => {
+	const surfaceUID = materialIndexToSurface[pb2Background.surfaceKey]?.uid ?? 'null';
 
 	const code = `
     pb2GameWorld.CreateBoxShape( 

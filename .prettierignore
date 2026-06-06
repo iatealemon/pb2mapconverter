@@ -16,5 +16,6 @@ node_modules/
 # Ignore test input maps
 src/__tests__/maps/**
 
-# I want my tab aligned walls.
+# I want my tab aligned comments.
 src/utils/surface.ts
+src/pb2Map.ts

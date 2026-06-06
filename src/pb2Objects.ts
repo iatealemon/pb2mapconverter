@@ -21,6 +21,9 @@ export interface PB2Background {
 	textureXOffset: number;
 	textureYOffset: number;
 	drawInFront: boolean;
+
+	// used to identify it's associated background surface.
+	surfaceKey: BackgroundIdentifierStr;
 }
 
 // ===============================================
@@ -29,11 +32,33 @@ export interface PB2Background {
 // --- PB3 Surface ---
 export interface SurfaceInfo {
 	readonly surfaceName: string;
-	readonly surfaceType: 'pb2SurfaceType.TYPE_PB2PLATFORM_WALL' | 'pb2SurfaceType.TYPE_SIMPLE_WALL' | 'pb2SurfaceType.TYPE_PLATFORM_WALL';
-	readonly surfaceTerrain: 'Ground' | 'Grass' | 'Sand' | 'Cliff' | 'Snow' | 'Black';
+
+	readonly surfaceType:
+		| 'pb2SurfaceType.TYPE_PB2PLATFORM_WALL'
+		| 'pb2SurfaceType.TYPE_SIMPLE_WALL'
+		| 'pb2SurfaceType.TYPE_PLATFORM_WALL'
+		| 'pb2SurfaceType.TYPE_SIMPLE_BACKGROUND';
+
+	readonly surfaceTerrain: 'Ground' | 'Grass' | 'Sand' | 'Cliff' | 'Snow' | 'Black' | 'Red' | 'Green' | 'Blue';
 }
 
 export interface PB3Surface extends SurfaceInfo {
 	uid: string;
 	count: number; // useful data to generate other data like position.
 }
+
+// --- PB3 Surface (for backgrounds) ---
+
+// For each unique combination of background material + color multiplier, we need to create a surface for it.
+// We first define a custom type that carries the information of both - then a custom serialize function such that
+// We can use it as a key for our Record type.
+export interface BackgroundIdentifier {
+	materialId: number;
+	colorMultiplier: string;
+}
+
+export type BackgroundIdentifierStr = `mat:${number}_color:${string}`;
+
+export const getBackgroundKey = (id: BackgroundIdentifier): BackgroundIdentifierStr => {
+	return `mat:${id.materialId}_color:${id.colorMultiplier}`;
+};

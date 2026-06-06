@@ -5,19 +5,56 @@ import { toPB3String } from './serialize.js';
 const editorIconWidth = 50;
 const editorIconHeight = 50;
 
-export const serializePB3Surface = (pb3Surface: PB3Surface, is_wall: boolean, worldBoundary: WorldBoundary) => {
+const blackColorMultiplier = '0x000000';
+const whiteColorMultiplier = '0xffffff';
+const redColorMultiplier = '0xe40001';
+const greenColorMultiplier = '0x73e48d';
+const blueColorMultiplier = '0x53b1e3';
+
+// Modern TS way of defining an enum.
+export const SurfaceType = {
+	Wall: 1,
+	Background: 2,
+} as const;
+
+type SurfaceT = (typeof SurfaceType)[keyof typeof SurfaceType];
+
+export const serializePB3Surface = (pb3Surface: PB3Surface, surfaceType: SurfaceT, worldBoundary: WorldBoundary) => {
+	const is_wall = surfaceType === SurfaceType.Wall;
+
 	// I only want walls that are grass to generate terrain.
 	const toGenerateTerrain = is_wall && (pb3Surface.surfaceTerrain === 'Grass' || pb3Surface.surfaceTerrain === 'Sand');
 
-	// Black is a special sentinel surface I created as a substitute to change color multiplier .. to black.
-	const color = pb3Surface.surfaceTerrain === 'Black' ? 'new pb2HighRangeColor( 0x000000 )' : 'new pb2HighRangeColor( 0xffffff )';
+	let color: string;
+	let surfaceTerrain = pb3Surface.surfaceTerrain;
 
-	// Revert sentinel value back to an appropriate default value, 'Ground'
-	const surfaceTerrain = pb3Surface.surfaceTerrain === 'Black' ? 'Ground' : pb3Surface.surfaceTerrain;
+	// Handling surface terrain sentinel values representing color multipliers..
+	switch (pb3Surface.surfaceTerrain) {
+		case 'Black':
+			color = `new pb2HighRangeColor( ${blackColorMultiplier} )`;
+			surfaceTerrain = 'Ground';
+			break;
+		case 'Red':
+			color = `new pb2HighRangeColor( ${redColorMultiplier} )`;
+			surfaceTerrain = 'Ground';
+			break;
+		case 'Green':
+			color = `new pb2HighRangeColor( ${greenColorMultiplier} )`;
+			surfaceTerrain = 'Ground';
+			break;
+		case 'Blue':
+			color = `new pb2HighRangeColor( ${blueColorMultiplier} )`;
+			surfaceTerrain = 'Ground';
+			break;
+		default:
+			color = `new pb2HighRangeColor( ${whiteColorMultiplier} )`;
+	}
 
 	// Index is used to dynamically calculate appropriate position and name, laying it out in a nice fashion..
 	const posX = worldBoundary.min.x + editorIconWidth * pb3Surface.count;
-	const posY = worldBoundary.min.y - editorIconHeight * 3;
+
+	const heightPaddingMultplier = is_wall ? 3 : 2;
+	const posY = worldBoundary.min.y - editorIconHeight * heightPaddingMultplier;
 
 	const code = `
         ${pb3Surface.uid} = pb2SurfaceType.CreateSurfaceType({ 
@@ -75,7 +112,7 @@ export const serializePB3Surface = (pb3Surface: PB3Surface, is_wall: boolean, wo
 		pixelated: 'false',
 		transparent: 'false',
 		opacity: '1',
-		color: 'new pb2HighRangeColor( 0xffffff )',
+		color: color,
 		color_addon: 'new pb2HighRangeColor( 0x000000 )',
 		appearance: 'pb2SurfaceType.APPEARANCE_NORMAL',
 		recommended_slices_per_density: '5',
