@@ -1,15 +1,10 @@
 import type { PB3Surface } from '#pb2Objects.js';
+import { blackColor, colorToPB2Hex, multiplyColor, pb2BlueColor, pb2GreenColor, pb2RedColor } from '#utils/color.js';
 import type { WorldBoundary } from '#utils/types.js';
 import { toPB3String } from './serialize.js';
 
 const editorIconWidth = 50;
 const editorIconHeight = 50;
-
-const blackColorMultiplier = '0x000000';
-const whiteColorMultiplier = '0xffffff';
-const redColorMultiplier = '0xe40001';
-const greenColorMultiplier = '0x73e48d';
-const blueColorMultiplier = '0x53b1e3';
 
 // Modern TS way of defining an enum.
 export const SurfaceType = {
@@ -25,30 +20,30 @@ export const serializePB3Surface = (pb3Surface: PB3Surface, surfaceType: Surface
 	// I only want walls that are grass to generate terrain.
 	const toGenerateTerrain = is_wall && (pb3Surface.surfaceTerrain === 'Grass' || pb3Surface.surfaceTerrain === 'Sand');
 
-	let color: string;
+	let colorMultiplier = pb3Surface.color;
 	let surfaceTerrain = pb3Surface.surfaceTerrain;
 
 	// Handling surface terrain sentinel values representing color multipliers..
 	switch (pb3Surface.surfaceTerrain) {
-		case 'Black':
-			color = `new pb2HighRangeColor( ${blackColorMultiplier} )`;
+		case 'Black': // from a special kind of wall called Black
+			colorMultiplier = blackColor; // multiplying anything with black is just black.
 			surfaceTerrain = 'Ground';
 			break;
 		case 'Red':
-			color = `new pb2HighRangeColor( ${redColorMultiplier} )`;
+			colorMultiplier = multiplyColor(pb2RedColor, colorMultiplier);
 			surfaceTerrain = 'Ground';
 			break;
 		case 'Green':
-			color = `new pb2HighRangeColor( ${greenColorMultiplier} )`;
+			colorMultiplier = multiplyColor(pb2GreenColor, colorMultiplier);
 			surfaceTerrain = 'Ground';
 			break;
 		case 'Blue':
-			color = `new pb2HighRangeColor( ${blueColorMultiplier} )`;
+			colorMultiplier = multiplyColor(pb2BlueColor, colorMultiplier);
 			surfaceTerrain = 'Ground';
 			break;
-		default:
-			color = `new pb2HighRangeColor( ${whiteColorMultiplier} )`;
 	}
+
+	const color = `new pb2HighRangeColor( ${colorToPB2Hex(colorMultiplier)} )`;
 
 	// Index is used to dynamically calculate appropriate position and name, laying it out in a nice fashion..
 	const posX = worldBoundary.min.x + editorIconWidth * pb3Surface.count;

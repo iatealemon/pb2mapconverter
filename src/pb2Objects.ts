@@ -3,6 +3,7 @@
     It also contains all the type definition of a derived PB3 object, like assets (surface, team), etc..
 */
 
+import type { Color } from '#utils/color.js';
 import type { Geometry } from '#utils/types.js';
 
 // ===============================================
@@ -45,6 +46,7 @@ export interface SurfaceInfo {
 export interface PB3Surface extends SurfaceInfo {
 	uid: string;
 	count: number; // useful data to generate other data like position.
+	color: Color; // color multiplier (walls dont have color multiplier, so it would be 255, 255, 255).
 }
 
 // --- PB3 Surface (for backgrounds) ---
@@ -54,11 +56,11 @@ export interface PB3Surface extends SurfaceInfo {
 // We can use it as a key for our Record type.
 export interface BackgroundIdentifier {
 	materialId: number;
-	colorMultiplier: string;
+	colorMultiplier: Color;
 }
 
-export type BackgroundIdentifierStr = `mat:${number}_color:${string}`;
+export type BackgroundIdentifierStr = `mat:${number}_r:${string}_g:${string}_b:${string}`;
 
 export const getBackgroundKey = (id: BackgroundIdentifier): BackgroundIdentifierStr => {
-	return `mat:${id.materialId}_color:${id.colorMultiplier}`;
+	return `mat:${id.materialId}_r:${id.colorMultiplier.red}_g:${id.colorMultiplier.green}_b:${id.colorMultiplier.blue}`;
 };

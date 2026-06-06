@@ -1,6 +1,7 @@
 // Maps PB2 wall material to PB3 surface..
 
 import type { PB3Surface, SurfaceInfo } from '#pb2Objects.js';
+import { whiteColor, type Color } from './color.js';
 
 const pb2WallMaterialToSurfaceInfo: Record<number, SurfaceInfo> = {
     0:      { surfaceName: 'pb2platform_texture',           surfaceType: 'pb2SurfaceType.TYPE_PB2PLATFORM_WALL',   surfaceTerrain: 'Ground'    },  // Concrete
@@ -61,17 +62,19 @@ export const createPB2WallSurface = (materialIndex: number, count: number): PB3S
     return {
         ...wallSurfaceInfo,
         uid: `wallSurface${count}`,
-        count: count
+        count: count,
+        color: whiteColor
     }
 }
 
-export const createPB2BackgroundSurface = (materialIndex: number, count: number): PB3Surface => {
+export const createPB2BackgroundSurface = (materialIndex: number, count: number, color: Color): PB3Surface => {
     const backgroundSurfaceInfo = pb2BackgroundMaterialToSurfaceInfo[materialIndex] ?? defaultBackgroundSurfaceInfo;
 
     return {
         ...backgroundSurfaceInfo,
         uid: `backgroundSurface${count}`,
-        count: count
+        count: count,
+        color: color
     }
 }
 

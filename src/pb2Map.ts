@@ -11,12 +11,13 @@ import type { ParsedPB2XMLObject, WorldBoundary } from '#utils/types.js';
 import type { PB2Wall, PB2Background, PB3Surface, BackgroundIdentifierStr } from '#pb2Objects.js';
 
 import { getBackgroundKey } from '#pb2Objects.js';
-import { halfHexColor, isValidHexCode, parseGeometry, updateWorldBoundary } from '#utils/types.js';
+import { parseGeometry, updateWorldBoundary } from '#utils/types.js';
 import { PB3StandardFooter, PB3StandardMapHeader } from '#serialize/serialize.js';
 import { serializePB2Wall } from '#serialize/wall.js';
 import { createPB2BackgroundSurface, createPB2WallSurface, pb2ShadowBackgroundMaterial } from '#utils/surface.js';
 import { serializePB3Surface, SurfaceType } from '#serialize/surface.js';
 import { serializePB2Background } from '#serialize/background.js';
+import { doubleColor, hexToColor, isValidHexCode, whiteColor, type Color } from '#utils/color.js';
 
 export class PB2Map {
 	// ============================================================================================
@@ -123,7 +124,20 @@ export class PB2Map {
 				continue;
 			}
 
-			const colorMultiplier = pb2Object.$.c && isValidHexCode(pb2Object.$.c) ? halfHexColor(pb2Object.$.c) : "#FFFFFF";
+			let colorMultiplier: Color = whiteColor;
+
+			// We attempt to parse PB2's color multiplier.
+			if (isValidHexCode(pb2Object.$.c)) {
+				// We actually need to double the parsed color multiplier. This is because in PB2, the color multiplier
+				// actually ranges in the interval of [0, 2]. 
+				// This means that in PB2, #FFFFFF actually multiplies the respective color component by a factor of 2, 
+				// resulting in a brighter look. 
+
+				// This is also where a limitation of the conversion happens. Because PB3 doesnt support >1 color multiplier factor,
+				// we can never imitate color multipliers greater than #808080 in PB2.
+				const parsedColorMultiplier = hexToColor(pb2Object.$.c);
+				colorMultiplier = doubleColor(parsedColorMultiplier);
+			}
 
 			// We use a combination of material id and color multiplier as a unique key to an associated surface.
 			const backgroundIdentifierStr = getBackgroundKey({ materialId: materialIndex, colorMultiplier: colorMultiplier });
@@ -141,7 +155,7 @@ export class PB2Map {
 
 			// has this unique combination of material id and color multiplier found?
 			if (!(backgroundIdentifierStr in this.backgroundSurfaces)) {
-				this.backgroundSurfaces[backgroundIdentifierStr] = createPB2BackgroundSurface(materialIndex, surfaceCount);
+				this.backgroundSurfaces[backgroundIdentifierStr] = createPB2BackgroundSurface(materialIndex, surfaceCount, colorMultiplier);
 				++surfaceCount;
 			}
 		}
