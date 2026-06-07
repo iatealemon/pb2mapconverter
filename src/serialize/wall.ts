@@ -5,15 +5,15 @@ export const serializePB2Wall = (pb2Wall: PB2Wall, materialIndexToSurface: Recor
 	const surfaceUID = materialIndexToSurface[pb2Wall.materialIndex]?.uid ?? 'null';
 
 	const code = `
-    pb2GameWorld.CreateBoxShape( 
+    pb2GameWorld.CreateBoxShape(
     { 
         x: ${pb2Wall.geometry.x}, 
         y: ${pb2Wall.geometry.y}, 
         w: ${pb2Wall.geometry.w}, 
         h: ${pb2Wall.geometry.h}, 
-        m: ${surfaceUID},
+        m: ${surfaceUID}, 
         type: pb2Shape.WALL  
-	}), 
+	});
     `;
 
 	const editor_object = {
