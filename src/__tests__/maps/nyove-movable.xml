@@ -1,0 +1,1 @@
+<door uid="#door*1" x="-120" y="-100" w="100" h="100" moving="false" tarx="0" tary="0" maxspeed="10" vis="true" attach="-1" /><door uid="#door*2" x="20" y="-100" w="100" h="100" moving="false" tarx="0" tary="0" maxspeed="10" vis="false" attach="-1" />

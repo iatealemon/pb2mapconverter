@@ -7,8 +7,8 @@
     This is useful in a way to process and handle constraints like asset requirements,
     triggers, etc..
 */
-import type { ParsedPB2XMLObject, WorldBoundary } from '#utils/types.js';
-import { createPB2BackgroundSurface, createPB2WallSurface, getBackgroundKey, pb2ShadowBackgroundMaterial, type BackgroundIdentifierStr, type PB2Background, type PB2Wall, type PB3Surface } from '#pb2Objects/surface.js';
+import type { BooleanAsString, ParsedPB2XMLObject, WorldBoundary } from '#utils/types.js';
+import { getBackgroundKey, type BackgroundIdentifierStr, type PB2Background, type PB2Movable, type PB2Wall, type PB3Surface } from '#pb2Objects/surface.js';
 import { getLiquidKindKey, type LiquidIdentifierStr, type PB2Water, type PB3LiquidKind } from '#pb2Objects/liquid.js';
 
 import { parseGeometry, updateWorldBoundary } from '#utils/types.js';
@@ -19,6 +19,8 @@ import { serializePB2Background } from '#serialize/background.js';
 import { doubleColor, hexToColor, isValidHexCode, whiteColor, type Color } from '#utils/color.js';
 import { serializePB3LiquidKind } from '#serialize/liquid.js';
 import { serializePB2Water } from '#serialize/water.js';
+import { createPB2BackgroundSurface, createPB2MovableSurface_isVisible, createPB2WallSurface, pb2ShadowBackgroundMaterial } from '#pb2Objects/surface-map.js';
+import { serializePB2Movable } from '#serialize/movable.js';
 
 export class PB2Map {
 	// ============================================================================================
@@ -26,15 +28,17 @@ export class PB2Map {
 	private walls: PB2Wall[] = [];
 	private backgrounds: PB2Background[] = [];
 	private waters: PB2Water[] = [];
+	private movables: PB2Movable[] = [];
 
 	// Derived PB3 Objects.. (assets, execute method, comments, etc..)
 	private wallSurfaces: Record<number, PB3Surface> = {}; 							// maps every unique PB2 wall material (an id) with a created wall surface.
 	private backgroundSurfaces: Record<BackgroundIdentifierStr, PB3Surface> = {}; 	// maps every unique PB2 background material + color mult with a created background surface.
 	private liquidKinds: Record<LiquidIdentifierStr, PB3LiquidKind> = {}; 			// maps every unique PB2 water property with a created liquid kind.
-																	
+	private movableSurfaces: Partial<Record<BooleanAsString, PB3Surface>> = {};		// maps every unique PB2 door "look" with a movable surface. (tbh there's only in/visible 
+																					// but it's better to be consistent with the existing architecture.								
 	// Metadata
 	private worldBoundary: WorldBoundary = { min: { x: Infinity, y: Infinity }, max: { x: -Infinity, y: -Infinity } };
-
+	
 	// ============================================================================================
 
 	// Constructs a valid representation of the PB2 map, given an opaque parsed XML object.
@@ -54,6 +58,9 @@ export class PB2Map {
 				case 'water':
 					this.waters = this.parsePB2Water(parsedPB2Objects);
 					break;
+				case 'door':
+					this.movables = this.parsePB2Movable(parsedPB2Objects);
+					break;
 				default:
 					console.warn(`Encountered unknown / unsupported xml tag of ${pb2ObjectName}`);
 			}
@@ -64,7 +71,7 @@ export class PB2Map {
 	public serializeToPB3SourceCode = (): string => {
 		let pb3SourceCode: string = PB3StandardMapHeader;
 
-		// Order matters..
+		// Order matters.. we first serialize "assets" like objects..
 		for (const [_, wallSurface] of Object.entries(this.wallSurfaces)) {
 			pb3SourceCode += serializePB3Surface(wallSurface, SurfaceType.Wall, this.worldBoundary);
 		}
@@ -73,16 +80,25 @@ export class PB2Map {
 			pb3SourceCode += serializePB3Surface(backgroundSurface, SurfaceType.Background, this.worldBoundary);
 		}
 
+		for (const [_, movableSurface] of Object.entries(this.movableSurfaces)) {
+			pb3SourceCode += serializePB3Surface(movableSurface, SurfaceType.Movable, this.worldBoundary);
+		}
+
 		for (const [_, liquidKind] of Object.entries(this.liquidKinds)) {
 			pb3SourceCode += serializePB3LiquidKind(liquidKind, this.worldBoundary);
 		}
 
+		// We then serialize object instances..
 		for (const wall of this.walls) {
 			pb3SourceCode += serializePB2Wall(wall, this.wallSurfaces);
 		}
 
 		for (const background of this.backgrounds) {
 			pb3SourceCode += serializePB2Background(background, this.backgroundSurfaces);
+		}
+
+		for (const movable of this.movables) {
+			pb3SourceCode += serializePB2Movable(movable, this.movableSurfaces);
 		}
 
 		for (const water of this.waters) {
@@ -211,5 +227,30 @@ export class PB2Map {
 		}
 
 		return waters;
+	}
+
+	private parsePB2Movable = (pb2Objects: ParsedPB2XMLObject[]): PB2Movable[] => {
+		const movables: PB2Movable[] = [];
+
+		for (const pb2Object of pb2Objects) {
+			const geometry = parseGeometry(pb2Object);
+			const visible = pb2Object.$.vis === undefined ? true : pb2Object.$.vis === 'true';
+			const speed = Number(pb2Object.$.maxspeed ?? 10);
+
+			movables.push({
+				geometry: geometry,
+				visible: visible,
+				speed: speed
+			});
+
+			updateWorldBoundary(this.worldBoundary, geometry);
+
+			// has this specific type of movable surface been created?
+			if (!(`${visible}` in this.movableSurfaces)) {
+				this.movableSurfaces[`${visible}`] = createPB2MovableSurface_isVisible(visible);
+			}
+		}
+
+		return movables;
 	}
 }

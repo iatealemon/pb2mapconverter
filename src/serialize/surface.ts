@@ -1,7 +1,7 @@
 import type { PB3Surface } from '#pb2Objects/surface.js';
 import type { WorldBoundary } from '#utils/types.js';
 
-import { blackColor, colorToPB2Hex, multiplyColor, pb2BlueColor, pb2GreenColor, pb2RedColor } from '#utils/color.js';
+import { blackColor, colorToPB2Hex, multiplyColor, pb2BlueColor, pb2GreenColor, pb2RedColor, type Color } from '#utils/color.js';
 import { toPB3String } from './serialize.js';
 
 const editorIconWidth = 50;
@@ -11,20 +11,24 @@ const editorIconHeight = 50;
 export const SurfaceType = {
 	Wall: 1,
 	Background: 2,
+	Movable: 3,
 } as const;
 
 type SurfaceT = (typeof SurfaceType)[keyof typeof SurfaceType];
 
 export const serializePB3Surface = (pb3Surface: PB3Surface, surfaceType: SurfaceT, worldBoundary: WorldBoundary) => {
-	const is_wall = surfaceType === SurfaceType.Wall;
+	// Different types of surface (wall, background and movable) have different parameters.
+	// We calculate the appropriate parameter here.
 
-	// I only want walls that are grass to generate terrain.
-	const toGenerateTerrain = is_wall && (pb3Surface.surfaceTerrain === 'Grass' || pb3Surface.surfaceTerrain === 'Sand');
+	// Only walls that are grass or sand should generate terrain (for foilage effect).
+	const toGenerateTerrain = surfaceType === SurfaceType.Wall && (pb3Surface.surfaceTerrain === 'Grass' || pb3Surface.surfaceTerrain === 'Sand');
 
 	let colorMultiplier = pb3Surface.color;
 	let surfaceTerrain = pb3Surface.surfaceTerrain;
 
 	// Handling surface terrain sentinel values representing color multipliers..
+	// For walls and movables -> Black requires the color multiplier to be .. well black since there's no black material.
+	// For backgrounds, there are no native red, green and blue background so we use color multiplier in conjunction with white background.
 	switch (pb3Surface.surfaceTerrain) {
 		case 'Black': // from a special kind of wall called Black
 			colorMultiplier = blackColor; // multiplying anything with black is just black.
@@ -44,13 +48,42 @@ export const serializePB3Surface = (pb3Surface: PB3Surface, surfaceType: Surface
 			break;
 	}
 
-	const color = `new pb2HighRangeColor( ${colorToPB2Hex(colorMultiplier)} )`;
+	// We calculate an appropriate coordinate to place our surface editor objects. We shall place them at the top left corner of
+	// the world boundary, row by row.
+	let heightPaddingMultplier = 1;
 
-	// Index is used to dynamically calculate appropriate position and name, laying it out in a nice fashion..
+	switch (surfaceType) {
+		case SurfaceType.Wall:
+			heightPaddingMultplier = 3;
+			break;
+		case SurfaceType.Background:
+			heightPaddingMultplier = 2;
+			break;
+		default:
+			// it's movable. keep default value.
+			break;
+	}
+
+	// Count is used to dynamically calculate appropriate position and name, laying it out in a nice fashion..
 	const posX = worldBoundary.min.x + editorIconWidth * pb3Surface.count;
-
-	const heightPaddingMultplier = is_wall ? 3 : 2;
 	const posY = worldBoundary.min.y - editorIconHeight * heightPaddingMultplier;
+
+	// Both movables and walls needs to set parameter to be true. (according to PB3 that is)
+	const is_for_wall = surfaceType === SurfaceType.Wall || surfaceType === SurfaceType.Movable;
+
+	return serializeSurface(pb3Surface, toGenerateTerrain, colorMultiplier, is_for_wall, surfaceTerrain, posX, posY);
+};
+
+const serializeSurface = (
+	pb3Surface: PB3Surface,
+	toGenerateTerrain: boolean,
+	colorMultiplier: Color,
+	is_wall: boolean,
+	surfaceTerrain: string,
+	posX: number,
+	posY: number,
+) => {
+	const color = `new pb2HighRangeColor( ${colorToPB2Hex(colorMultiplier)} )`;
 
 	const code = `
         ${pb3Surface.uid} = pb2SurfaceType.CreateSurfaceType({ 
@@ -65,7 +98,7 @@ export const serializePB3Surface = (pb3Surface: PB3Surface, surfaceType: Surface
             shader_type: pb2SurfaceType.SHADER_GAMEPLAY, 
             pixelated: false, 
             transparent: false, 
-            opacity: 1, 
+            opacity: ${pb3Surface.visible ? 1 : 0}, 
             color: ${color}, 
             color_addon: new pb2HighRangeColor( 0x000000 ), 
             appearance: pb2SurfaceType.APPEARANCE_NORMAL, 
@@ -107,7 +140,7 @@ export const serializePB3Surface = (pb3Surface: PB3Surface, surfaceType: Surface
 		back_y: 'undefined',
 		pixelated: 'false',
 		transparent: 'false',
-		opacity: '1',
+		opacity: `${pb3Surface.visible ? 1 : 0}`,
 		color: color,
 		color_addon: 'new pb2HighRangeColor( 0x000000 )',
 		appearance: 'pb2SurfaceType.APPEARANCE_NORMAL',

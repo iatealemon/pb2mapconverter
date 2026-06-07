@@ -41,3 +41,5 @@ export const parseGeometry = (pb2Object: ParsedPB2XMLObject): Geometry => {
 		h: Number(pb2Object.$.h ?? 0),
 	};
 };
+
+export type BooleanAsString = `${boolean}`;
