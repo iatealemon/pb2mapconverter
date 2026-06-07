@@ -33,6 +33,13 @@ export interface PB2Lamp {
 	hasFlare: boolean;
 }
 
+export interface PB2Gun {
+	position: Position;
+	model: string;
+	team: number;
+	upgrade: number;
+}
+
 // ===============================================
 // Derived PB3 Objects
 // ===============================================

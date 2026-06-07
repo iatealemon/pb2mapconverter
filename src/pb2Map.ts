@@ -5,7 +5,7 @@
     triggers, etc..
 */
 import type { ParsedPB2XMLObject, WorldBoundary, XLMParseOutput } from '#utils/types.js';
-import type { PB2Wall, PB2Background, PB3Surface, BackgroundIdentifierStr, PB2Lamp } from '#pb2Objects.js';
+import type { PB2Wall, PB2Background, PB3Surface, BackgroundIdentifierStr, PB2Lamp, PB2Gun } from '#pb2Objects.js';
 
 import { getBackgroundKey } from '#pb2Objects.js';
 import { halfHexColor, isValidHexCode, parseGeometry, updateWorldBoundary } from '#utils/types.js';
@@ -15,6 +15,7 @@ import { createPB2BackgroundSurface, createPB2WallSurface, pb2ShadowBackgroundMa
 import { serializePB3Surface, SurfaceType } from '#serialize/surface.js';
 import { serializePB2Background } from '#serialize/background.js';
 import { serializePB2Lamp } from '#serialize/lamp.js';
+import { serializePB2Gun } from '#serialize/gun.js';
 
 export class PB2Map {
 	// ============================================================================================
@@ -22,6 +23,7 @@ export class PB2Map {
 	private walls: PB2Wall[] = [];
 	private backgrounds: PB2Background[] = [];
 	private lamps: PB2Lamp[] = [];
+	private guns: PB2Gun[] = [];
 
 	// Derived PB3 Objects.. (assets, execute method, comments, etc..)
 	private wallSurfaces: Record<number, PB3Surface> = {}; 							// maps every unique PB2 wall material (an id) with a created wall surface.
@@ -49,6 +51,9 @@ export class PB2Map {
 				case 'lamp':
 					this.lamps = this.parsePB2Lamp(parsedPB2Objects);
 					break;
+				/*case 'gun':
+					this.guns = this.parsePB2Gun(parsedPB2Objects);
+					break;*/
 				default:
 					console.warn(`Encountered unknown / unsupported xml tag of ${pb2ObjectName}`);
 			}
@@ -88,6 +93,10 @@ export class PB2Map {
 
 		for (const lamp of this.lamps) {
 			pb3SourceCode += serializePB2Lamp(lamp);
+		}
+
+		for (const gun of this.guns) {
+			pb3SourceCode += serializePB2Gun(gun, {});
 		}
 
 		pb3SourceCode += PB3StandardFooter;
@@ -166,7 +175,7 @@ export class PB2Map {
 	};
 
 	private parsePB2Lamp = (pb2Objects: ParsedPB2XMLObject[]): PB2Lamp[] => {
-		const lamps = pb2Objects.map(({$: props}) => ({
+		const lamps: PB2Lamp[] = pb2Objects.map(({$: props}) => ({
 			position: {
 				x: Number(props.x ?? 0),
 				y: Number(props.y ?? 0),
@@ -174,7 +183,21 @@ export class PB2Map {
 			power: Number(props.power ?? 0),
 			hasFlare: ["true", "1"].includes(props.flare ?? "false"),
 		}));
-		lamps.forEach(lamp => updateWorldBoundary(this.worldBoundary, lamp.position));
+		lamps.forEach(({position}) => updateWorldBoundary(this.worldBoundary, position));
 		return lamps;
+	};
+
+	private parsePB2Gun = (pb2Objects: ParsedPB2XMLObject[]): PB2Gun[] => {
+		const guns: PB2Gun[] = pb2Objects.map(({$: props}) => ({
+			position: {
+				x: Number(props.x ?? 0),
+				y: Number(props.y ?? 0),
+			},
+			model: props.model ?? "gun_rifle", // todo check what's the default
+			team: Number(props.command ?? -1),
+			upgrade: Number(props.upg ?? 0),
+		}));
+		guns.forEach(({position}) => updateWorldBoundary(this.worldBoundary, position));
+		return guns;
 	};
 }
