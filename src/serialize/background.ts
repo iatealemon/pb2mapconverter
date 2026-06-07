@@ -1,4 +1,4 @@
-import type { BackgroundIdentifierStr, PB2Background, PB3Surface } from '#pb2Objects.js';
+import type { BackgroundIdentifierStr, PB2Background, PB3Surface } from '#pb2Objects/surface.js';
 import { toPB3String } from './serialize.js';
 
 export const serializePB2Background = (pb2Background: PB2Background, materialIndexToSurface: Record<BackgroundIdentifierStr, PB3Surface>): string => {

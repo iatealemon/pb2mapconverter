@@ -1,14 +1,21 @@
 /* 
-    This file contains all the type definition that corresponds to a PB2 object.
-    It also contains all the type definition of a derived PB3 object, like assets (surface, team), etc..
+    This file contains all the type definition that relates to the PB3 Surface.
+
+    1. Walls
+    2. Backgrounds
+
+    In PB2, walls and backgrounds themselves carry information like material and color multiplier.
+    In PB3, these informations are seperated into Surfaces, containing material and color multiplier.
+
+    Therefore, for each unique combination of background material + color multiplier, we need to create a surface for it.
 */
 
+import type { Color } from '#utils/color.js';
 import type { Geometry, Position } from '#utils/types.js';
 
 // ===============================================
 // PB2 Objects
 // ===============================================
-// --- PB2 Wall ---
 export interface PB2Wall {
 	geometry: Geometry;
 	materialIndex: number;
@@ -40,10 +47,18 @@ export interface PB2Gun {
 	upgrade: number;
 }
 
+export interface PB2Movable {
+	geometry: Geometry;
+	visible: boolean;
+	speed: number;
+}
+
 // ===============================================
 // Derived PB3 Objects
 // ===============================================
-// --- PB3 Surface ---
+
+export type ValidSurfaceTerrain = 'Ground' | 'Grass' | 'Sand' | 'Cliff' | 'Snow' | 'Black' | 'Red' | 'Green' | 'Blue';
+
 export interface SurfaceInfo {
 	readonly surfaceName: string;
 
@@ -53,26 +68,26 @@ export interface SurfaceInfo {
 		| 'pb2SurfaceType.TYPE_PLATFORM_WALL'
 		| 'pb2SurfaceType.TYPE_SIMPLE_BACKGROUND';
 
-	readonly surfaceTerrain: 'Ground' | 'Grass' | 'Sand' | 'Cliff' | 'Snow' | 'Black' | 'Red' | 'Green' | 'Blue';
+	readonly surfaceTerrain: ValidSurfaceTerrain;
 }
 
 export interface PB3Surface extends SurfaceInfo {
 	uid: string;
 	count: number; // useful data to generate other data like position.
+	color: Color; // color multiplier (walls dont have color multiplier, so it would be 255, 255, 255).
+	visible: boolean; // some movables are not visible.
 }
-
-// --- PB3 Surface (for backgrounds) ---
 
 // For each unique combination of background material + color multiplier, we need to create a surface for it.
 // We first define a custom type that carries the information of both - then a custom serialize function such that
-// We can use it as a key for our Record type.
+// This is used as a key for our Record type.
 export interface BackgroundIdentifier {
 	materialId: number;
-	colorMultiplier: string;
+	colorMultiplier: Color;
 }
 
-export type BackgroundIdentifierStr = `mat:${number}_color:${string}`;
+export type BackgroundIdentifierStr = `mat:${number}_r:${string}_g:${string}_b:${string}`;
 
 export const getBackgroundKey = (id: BackgroundIdentifier): BackgroundIdentifierStr => {
-	return `mat:${id.materialId}_color:${id.colorMultiplier}`;
+	return `mat:${id.materialId}_r:${id.colorMultiplier.red}_g:${id.colorMultiplier.green}_b:${id.colorMultiplier.blue}`;
 };

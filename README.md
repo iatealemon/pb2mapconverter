@@ -52,16 +52,17 @@ pb2GameWorld.CreateBoxShape({ x: 0, y: 0, w: 10, h: 10, type: pb2Shape.WALL }); 
 
 ```js
 const editor_object = {
-    /* .... */
-    // must be string! the resulting source code must have the value wrapped in quotation marks.
-    x: pb2Wall.geometry.x.toString(),
-    y: pb2Wall.geometry.y.toString(),
-    w: pb2Wall.geometry.w.toString(),
-    h: pb2Wall.geometry.h.toString(),
-    /* .... */
+	/* .... */
+	// must be string! the resulting source code must have the value wrapped in quotation marks.
+	x: pb2Wall.geometry.x.toString(),
+	y: pb2Wall.geometry.y.toString(),
+	w: pb2Wall.geometry.w.toString(),
+	h: pb2Wall.geometry.h.toString(),
+	/* .... */
 };
 ```
 
 ### Limitations
 
-There's no one to one correlation between PB2 wall material and PB3 surfaces. The closest surface type is PB2 platform wall.
+1. There's no one to one correlation between PB2 wall material or backgrounds to PB3 surfaces. The closest surface type is PB2 platform wall.
+2. Some background color multiplier may look different. This is because of how background multiplier works in PB2 vs PB3. (this will affect bright color multipliers).

@@ -46,33 +46,4 @@ export const parseGeometry = (pb2Object: ParsedPB2XMLObject): Geometry => {
 	};
 };
 
-export const isValidHexCode = (hexCode: string) => {
-	const hexColorRegex = /^#[0-9A-Fa-f]{6}$/;
-	return hexColorRegex.test(hexCode);
-};
-
-// because PB2 hex color multiplier is actually a multiplier from [0-2],
-// we need to half it as PB3's color multiplier is from [0-1].
-export function halfHexColor(hex: string): string {
-	// 1. Remove the '#' character
-	const cleanHex = hex.replace('#', '');
-
-	// 2. Extract and convert channels to base-10 integers
-	const rInt = parseInt(cleanHex.substring(0, 2), 16);
-	const gInt = parseInt(cleanHex.substring(2, 4), 16);
-	const bInt = parseInt(cleanHex.substring(4, 6), 16);
-
-	// 3. Half the values (using Math.floor to ensure whole integers)
-	const halfR = Math.floor(rInt / 2);
-	const halfG = Math.floor(gInt / 2);
-	const halfB = Math.floor(bInt / 2);
-
-	// 4. Convert back to hex strings, padded to 2 characters
-	// toString(16) changes it to hex, padStart(2, '0') adds a leading zero if needed
-	const rHex = halfR.toString(16).padStart(2, '0');
-	const gHex = halfG.toString(16).padStart(2, '0');
-	const bHex = halfB.toString(16).padStart(2, '0');
-
-	// 5. Combine and return upper-case or lower-case hex string
-	return `#${rHex}${gHex}${bHex}`.toUpperCase();
-}
+export type BooleanAsString = `${boolean}`;
