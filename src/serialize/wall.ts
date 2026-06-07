@@ -1,4 +1,4 @@
-import type { PB2Wall, PB3Surface } from '#pb2Objects.js';
+import type { PB2Wall, PB3Surface } from '#pb2Objects/surface.js';
 import { toPB3String } from './serialize.js';
 
 export const serializePB2Wall = (pb2Wall: PB2Wall, materialIndexToSurface: Record<number, PB3Surface>): string => {

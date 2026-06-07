@@ -1,6 +1,7 @@
-import type { PB3Surface } from '#pb2Objects.js';
-import { blackColor, colorToPB2Hex, multiplyColor, pb2BlueColor, pb2GreenColor, pb2RedColor } from '#utils/color.js';
+import type { PB3Surface } from '#pb2Objects/surface.js';
 import type { WorldBoundary } from '#utils/types.js';
+
+import { blackColor, colorToPB2Hex, multiplyColor, pb2BlueColor, pb2GreenColor, pb2RedColor } from '#utils/color.js';
 import { toPB3String } from './serialize.js';
 
 const editorIconWidth = 50;

@@ -8,26 +8,29 @@
     triggers, etc..
 */
 import type { ParsedPB2XMLObject, WorldBoundary } from '#utils/types.js';
-import type { PB2Wall, PB2Background, PB3Surface, BackgroundIdentifierStr } from '#pb2Objects.js';
+import { createPB2BackgroundSurface, createPB2WallSurface, getBackgroundKey, pb2ShadowBackgroundMaterial, type BackgroundIdentifierStr, type PB2Background, type PB2Wall, type PB3Surface } from '#pb2Objects/surface.js';
+import { getLiquidKindKey, type LiquidIdentifierStr, type PB2Water, type PB3LiquidKind } from '#pb2Objects/liquid.js';
 
-import { getBackgroundKey } from '#pb2Objects.js';
 import { parseGeometry, updateWorldBoundary } from '#utils/types.js';
 import { PB3StandardFooter, PB3StandardMapHeader } from '#serialize/serialize.js';
 import { serializePB2Wall } from '#serialize/wall.js';
-import { createPB2BackgroundSurface, createPB2WallSurface, pb2ShadowBackgroundMaterial } from '#utils/surface.js';
 import { serializePB3Surface, SurfaceType } from '#serialize/surface.js';
 import { serializePB2Background } from '#serialize/background.js';
 import { doubleColor, hexToColor, isValidHexCode, whiteColor, type Color } from '#utils/color.js';
+import { serializePB3LiquidKind } from '#serialize/liquid.js';
+import { serializePB2Water } from '#serialize/water.js';
 
 export class PB2Map {
 	// ============================================================================================
 	// PB2 Objects
 	private walls: PB2Wall[] = [];
 	private backgrounds: PB2Background[] = [];
+	private waters: PB2Water[] = [];
 
 	// Derived PB3 Objects.. (assets, execute method, comments, etc..)
 	private wallSurfaces: Record<number, PB3Surface> = {}; 							// maps every unique PB2 wall material (an id) with a created wall surface.
 	private backgroundSurfaces: Record<BackgroundIdentifierStr, PB3Surface> = {}; 	// maps every unique PB2 background material + color mult with a created background surface.
+	private liquidKinds: Record<LiquidIdentifierStr, PB3LiquidKind> = {}; 			// maps every unique PB2 water property with a created liquid kind.
 																	
 	// Metadata
 	private worldBoundary: WorldBoundary = { min: { x: Infinity, y: Infinity }, max: { x: -Infinity, y: -Infinity } };
@@ -48,6 +51,9 @@ export class PB2Map {
 				case 'bg':
 					this.backgrounds = this.parsePB2Background(parsedPB2Objects);
 					break;
+				case 'water':
+					this.waters = this.parsePB2Water(parsedPB2Objects);
+					break;
 				default:
 					console.warn(`Encountered unknown / unsupported xml tag of ${pb2ObjectName}`);
 			}
@@ -67,12 +73,20 @@ export class PB2Map {
 			pb3SourceCode += serializePB3Surface(backgroundSurface, SurfaceType.Background, this.worldBoundary);
 		}
 
+		for (const [_, liquidKind] of Object.entries(this.liquidKinds)) {
+			pb3SourceCode += serializePB3LiquidKind(liquidKind, this.worldBoundary);
+		}
+
 		for (const wall of this.walls) {
 			pb3SourceCode += serializePB2Wall(wall, this.wallSurfaces);
 		}
 
 		for (const background of this.backgrounds) {
 			pb3SourceCode += serializePB2Background(background, this.backgroundSurfaces);
+		}
+
+		for (const water of this.waters) {
+			pb3SourceCode += serializePB2Water(water, this.liquidKinds);
 		}
 
 		pb3SourceCode += PB3StandardFooter;
@@ -153,7 +167,7 @@ export class PB2Map {
 
 			updateWorldBoundary(this.worldBoundary, geometry);
 
-			// has this unique combination of material id and color multiplier found?
+			// has this specific kind of surface been created?
 			if (!(backgroundIdentifierStr in this.backgroundSurfaces)) {
 				this.backgroundSurfaces[backgroundIdentifierStr] = createPB2BackgroundSurface(materialIndex, surfaceCount, colorMultiplier);
 				++surfaceCount;
@@ -162,4 +176,40 @@ export class PB2Map {
 
 		return backgrounds;
 	};
+
+	private parsePB2Water = (pb2Objects: ParsedPB2XMLObject[]): PB2Water[] => {
+		const waters: PB2Water[] = [];
+
+		let liquidCount = 0;
+
+		for (const pb2Object of pb2Objects) {
+			const geometry = parseGeometry(pb2Object);
+			const damage = Number(pb2Object.$.damage ?? 0);
+			const actAsWater = pb2Object.$.friction === undefined ? true : pb2Object.$.friction === 'true';
+
+			// We use a combination of damage and actAsWater as a unique key to an associated liquid.
+			const liquidIdentifierStr = getLiquidKindKey({ damage: damage, actAsWater: actAsWater });
+
+			waters.push({
+				geometry: geometry,
+				liquidIdentifier: liquidIdentifierStr
+			});
+
+			updateWorldBoundary(this.worldBoundary, geometry);
+
+			// has this specific type of liquid kind been created?
+			if (!(liquidIdentifierStr in this.liquidKinds)) {
+				this.liquidKinds[liquidIdentifierStr] = {
+					uid: `liquidKind${liquidCount}`,
+					count: liquidCount,
+					damage: damage,
+					actAsWater: actAsWater
+				};
+
+				++liquidCount;
+			}
+		}
+
+		return waters;
+	}
 }

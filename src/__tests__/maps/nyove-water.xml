@@ -1,0 +1,1 @@
+<water uid="#water*1" x="-230" y="-100" w="100" h="100" damage="0" friction="false" /><water uid="#water*2" x="-110" y="-100" w="100" h="100" damage="0" friction="true" /><water uid="#water*3" x="10" y="-100" w="100" h="100" damage="0.01" friction="true" /><water uid="#water*5" x="130" y="-100" w="100" h="100" damage="0.01" friction="false" />
