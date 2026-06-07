@@ -5,7 +5,7 @@
     triggers, etc..
 */
 import type { ParsedPB2XMLObject, WorldBoundary, XLMParseOutput } from '#utils/types.js';
-import type { PB2Wall, PB2Background, PB3Surface, BackgroundIdentifierStr } from '#pb2Objects.js';
+import type { PB2Wall, PB2Background, PB3Surface, BackgroundIdentifierStr, PB2Lamp } from '#pb2Objects.js';
 
 import { getBackgroundKey } from '#pb2Objects.js';
 import { halfHexColor, isValidHexCode, parseGeometry, updateWorldBoundary } from '#utils/types.js';
@@ -14,12 +14,14 @@ import { serializePB2Wall } from '#serialize/wall.js';
 import { createPB2BackgroundSurface, createPB2WallSurface, pb2ShadowBackgroundMaterial } from '#utils/surface.js';
 import { serializePB3Surface, SurfaceType } from '#serialize/surface.js';
 import { serializePB2Background } from '#serialize/background.js';
+import { serializePB2Lamp } from '#serialize/lamp.js';
 
 export class PB2Map {
 	// ============================================================================================
 	// PB2 Objects
 	private walls: PB2Wall[] = [];
 	private backgrounds: PB2Background[] = [];
+	private lamps: PB2Lamp[] = [];
 
 	// Derived PB3 Objects.. (assets, execute method, comments, etc..)
 	private wallSurfaces: Record<number, PB3Surface> = {}; 							// maps every unique PB2 wall material (an id) with a created wall surface.
@@ -43,6 +45,9 @@ export class PB2Map {
 					break;
 				case 'bg':
 					this.backgrounds = this.parsePB2Background(parsedPB2Objects);
+					break;
+				case 'lamp':
+					this.lamps = this.parsePB2Lamp(parsedPB2Objects);
 					break;
 				default:
 					console.warn(`Encountered unknown / unsupported xml tag of ${pb2ObjectName}`);
@@ -79,6 +84,10 @@ export class PB2Map {
 
 		for (const background of this.backgrounds) {
 			pb3SourceCode += serializePB2Background(background, this.backgroundSurfaces);
+		}
+
+		for (const lamp of this.lamps) {
+			pb3SourceCode += serializePB2Lamp(lamp);
 		}
 
 		pb3SourceCode += PB3StandardFooter;
@@ -154,5 +163,18 @@ export class PB2Map {
 		}
 
 		return backgrounds;
+	};
+
+	private parsePB2Lamp = (pb2Objects: ParsedPB2XMLObject[]): PB2Lamp[] => {
+		const lamps = pb2Objects.map(({$: props}) => ({
+			position: {
+				x: Number(props.x ?? 0),
+				y: Number(props.y ?? 0),
+			},
+			power: Number(props.power ?? 0),
+			hasFlare: ["true", "1"].includes(props.flare ?? "false"),
+		}));
+		lamps.forEach(lamp => updateWorldBoundary(this.worldBoundary, lamp.position));
+		return lamps;
 	};
 }

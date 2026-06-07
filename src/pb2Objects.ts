@@ -3,7 +3,7 @@
     It also contains all the type definition of a derived PB3 object, like assets (surface, team), etc..
 */
 
-import type { Geometry } from '#utils/types.js';
+import type { Geometry, Position } from '#utils/types.js';
 
 // ===============================================
 // PB2 Objects
@@ -24,6 +24,13 @@ export interface PB2Background {
 
 	// used to identify it's associated background surface.
 	surfaceKey: BackgroundIdentifierStr;
+}
+
+// --- PB2 Lamp ---
+export interface PB2Lamp {
+	position: Position;
+	power: number;
+	hasFlare: boolean;
 }
 
 // ===============================================
