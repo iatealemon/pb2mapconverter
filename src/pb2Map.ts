@@ -52,7 +52,17 @@ export class PB2Map {
 
 	// Serializes the current PB2 map intp PB3 source code.
 	public serializeToPB3SourceCode = (): string => {
-		let pb3SourceCode: string = PB3StandardMapHeader;
+		let pb3SourceCode = '';
+
+		// global vars declaration
+		const globalNames: string[] = [];
+		const allSurfaces = Object.values(this.wallSurfaces).concat(Object.values(this.backgroundSurfaces));
+		globalNames.push(...allSurfaces.map(s => s.uid));
+		if (globalNames.length > 0) {
+			pb3SourceCode += `var ${globalNames.join(', ')};`;
+		}
+
+		pb3SourceCode += PB3StandardMapHeader;
 
 		// Order matters..
 		for (const [_, wallSurface] of Object.entries(this.wallSurfaces)) {
