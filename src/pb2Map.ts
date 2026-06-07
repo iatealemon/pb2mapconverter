@@ -1,13 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* 
     This file contains a typed representation of a parsed PB2 map.
 
     This is useful in a way to process and handle constraints like asset requirements,
     triggers, etc..
 */
-import type { ParsedPB2XMLObject, WorldBoundary } from '#utils/types.js';
+import type { ParsedPB2XMLObject, WorldBoundary, XLMParseOutput } from '#utils/types.js';
 import type { PB2Wall, PB2Background, PB3Surface, BackgroundIdentifierStr } from '#pb2Objects.js';
 
 import { getBackgroundKey } from '#pb2Objects.js';
@@ -34,10 +31,10 @@ export class PB2Map {
 	// ============================================================================================
 
 	// Constructs a valid representation of the PB2 map, given an opaque parsed XML object.
-	constructor(xmlFile: any) {
+	constructor(xmlFile: XLMParseOutput) {
 		for (const [pb2ObjectName, pb2Objects] of Object.entries(xmlFile.root)) {
 			// @TODO: Validation w/ zod? and more concrete type. (maybe overkill)
-			const parsedPB2Objects = pb2Objects as ParsedPB2XMLObject[];
+			const parsedPB2Objects = pb2Objects;
 
 			// Using some form of function object map *may* be more elegant (need to factor in dealing with types).. but let's do this for now.
 			switch (pb2ObjectName) {
