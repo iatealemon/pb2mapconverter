@@ -3,7 +3,8 @@
 // ===============================================
 
 import { blackColor, whiteColor, type Color } from '#utils/color.js';
-import type { PB3Surface, SurfaceInfo } from './surface.js';
+import type { SurfaceEntity } from './entity-types.js';
+import type { SurfaceInfo } from './surface.js';
 
 const pb2WallMaterialToSurfaceInfo: Record<number, SurfaceInfo> = {
 	0: { surfaceName: 'pb2platform_texture', surfaceType: 'pb2SurfaceType.TYPE_PB2PLATFORM_WALL', surfaceTerrain: 'Ground' }, // Concrete
@@ -52,7 +53,7 @@ const pb2BackgroundMaterialToSurfaceInfo: Record<number, SurfaceInfo> = {
 
 export const pb2ShadowBackgroundMaterial = -1;
 
-export const createPB2WallSurface = (materialIndex: number, count: number): PB3Surface => {
+export const createPB2WallSurface = (materialIndex: number, count: number): SurfaceEntity => {
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const wallSurfaceInfo = pb2WallMaterialToSurfaceInfo[materialIndex] ?? pb2WallMaterialToSurfaceInfo[0]!;
 
@@ -65,7 +66,7 @@ export const createPB2WallSurface = (materialIndex: number, count: number): PB3S
 	};
 };
 
-export const createPB2BackgroundSurface = (materialIndex: number, count: number, color: Color): PB3Surface => {
+export const createPB2BackgroundSurface = (materialIndex: number, count: number, color: Color): SurfaceEntity => {
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const backgroundSurfaceInfo = pb2BackgroundMaterialToSurfaceInfo[materialIndex] ?? pb2BackgroundMaterialToSurfaceInfo[0]!;
 

@@ -11,51 +11,6 @@
 */
 
 import type { Color } from '#utils/color.js';
-import type { Geometry, Position } from '#utils/types.js';
-
-// ===============================================
-// PB2 Objects
-// ===============================================
-export interface PB2Wall {
-	geometry: Geometry;
-	materialIndex: number;
-}
-
-// --- PB2 Background ---
-export interface PB2Background {
-	geometry: Geometry;
-	backgroundMaterialIndex: number;
-	textureXOffset: number;
-	textureYOffset: number;
-	drawInFront: boolean;
-
-	// used to identify it's associated background surface.
-	surfaceKey: BackgroundIdentifierStr;
-}
-
-// --- PB2 Lamp ---
-export interface PB2Lamp {
-	position: Position;
-	power: number;
-	hasFlare: boolean;
-}
-
-export interface PB2Gun {
-	position: Position;
-	model: string;
-	team: number;
-	upgrade: number;
-}
-
-export interface PB2Movable {
-	geometry: Geometry;
-	visible: boolean;
-	speed: number;
-}
-
-// ===============================================
-// Derived PB3 Objects
-// ===============================================
 
 export type ValidSurfaceTerrain = 'Ground' | 'Grass' | 'Sand' | 'Cliff' | 'Snow' | 'Black' | 'Red' | 'Green' | 'Blue';
 
@@ -69,13 +24,6 @@ export interface SurfaceInfo {
 		| 'pb2SurfaceType.TYPE_SIMPLE_BACKGROUND';
 
 	readonly surfaceTerrain: ValidSurfaceTerrain;
-}
-
-export interface PB3Surface extends SurfaceInfo {
-	uid: string;
-	count: number; // useful data to generate other data like position.
-	color: Color; // color multiplier (walls dont have color multiplier, so it would be 255, 255, 255).
-	visible: boolean; // some movables are not visible.
 }
 
 // For each unique combination of background material + color multiplier, we need to create a surface for it.

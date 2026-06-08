@@ -1,5 +1,5 @@
 import { parseStringPromise } from 'xml2js';
-import { PB2Map } from '#pb2Map.js';
+import { PB3Map } from '#pb3Map.js';
 import type { XLMParseOutput } from '#utils/types.js';
 
 // xml2js can't handle ampersand within an attribute value which isn't rare because pb2 can handle ampersands
@@ -17,10 +17,10 @@ const processPB2XMLFile = async (pb2XMLFile: string): Promise<string | undefined
 	// Refer to xml2js for object layout documentation. For PB2 maps specifically we are primarily concern with extracting the attributes.
 	const xmlFile = await parseStringPromise(escapeAmpersand(pb2XMLFile)) as XLMParseOutput;
 	// Constructs a valid typed PB2 map from the given XML object.
-	const pb2Map = new PB2Map(xmlFile);
+	const map = new PB3Map(xmlFile);
 
 	// Serialize the processed PB2 map into source code.
-	return pb2Map.serializeToPB3SourceCode();
+	return map.serializeToPB3SourceCode();
 };
 
 export default processPB2XMLFile;
