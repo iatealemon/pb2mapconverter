@@ -85,15 +85,22 @@ const _serializeSurface = (
 ) => {
 	const color = `new pb2HighRangeColor( ${colorToPB2Hex(colorMultiplier)} )`;
 
+	// for avoiding ditto mismatch
+	const includeName = toGenerateTerrain;
+	const includeFoliageTemplate = toGenerateTerrain && surfaceTerrain === 'Grass';
+	const includeHasCliff = toGenerateTerrain && (surfaceTerrain === 'Ground' || surfaceTerrain === 'Grass' || surfaceTerrain === 'Sand' || surfaceTerrain === 'Cliff');
+	const includeHasGround = toGenerateTerrain && (surfaceTerrain === 'Grass' || surfaceTerrain === 'Sand' || surfaceTerrain === 'Cliff');
+	const includeImpactScale = is_wall;
+
 	const code = `
         ${surface.uid} = pb2SurfaceType.CreateSurfaceType({ 
             geometry_type: ${surface.surfaceType}, 
             texture_container: pb2Texture.GetTextureByName('${surface.surfaceName}'), 
-			name: '${surface.surfaceTerrain}', 
+			${includeName ? `name: '${surface.surfaceTerrain}', ` : ''}
             terrain_generation: ${toGenerateTerrain}, 
-			foliage_template: pb2FoliageClass.TEMPLATE_EARTH, 
-			has_cliff: true, 
-			has_ground: true,
+			${includeFoliageTemplate ? 'foliage_template: pb2FoliageClass.TEMPLATE_EARTH, ' : ''}
+			${includeHasCliff ? 'has_cliff: true, ' : ''}
+			${includeHasGround ? 'has_ground: true, ' : ''}
             is_for_wall: ${is_wall}, 
             shader_type: pb2SurfaceType.SHADER_GAMEPLAY, 
             pixelated: false, 
@@ -113,7 +120,7 @@ const _serializeSurface = (
             slice_appearance: pb2SurfaceType.APPEARANCE_NORMAL, 
             slice_opacity: 1, 
             slice_scale: 1, 
-            impact_scale: 1, 
+            ${includeImpactScale ? 'impact_scale: 1, ' : ''}
             uv_x: 0, 
             uv_y: 0, 
             uv_z: 0, 

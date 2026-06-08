@@ -11,7 +11,7 @@ const DEFAULT_EDITOR_OBJECT = {
     "color":"0xffffff",
     "power":"0.3",
     "flare":"true",
-    "blur":"true",
+    "blur":"false",
     "z":"0",
     "scale":"3",
     "attachment":"null",
@@ -33,7 +33,7 @@ export const serializeLamp = (entity: LampEntity): string => {
         color: 0xffffff, 
         power: ${entity.power}, 
         flare: ${entity.hasFlare}, 
-        blur: false 
+        blur: false${entity.hasFlare ? `, z: 0, scale: 3` : ''} 
     });
     `;
 

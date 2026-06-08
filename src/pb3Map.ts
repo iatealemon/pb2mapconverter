@@ -91,8 +91,13 @@ export class PB3Map {
 
 		// global vars declaration
 		const globalNames: string[] = [];
-		const allSurfaces = Object.values(this.wallSurfaces).concat(Object.values(this.backgroundSurfaces));
-		globalNames.push(...allSurfaces.map(s => s.uid));
+		globalNames.push(...Object.values(this.wallSurfaces).map(s => s.uid));
+		globalNames.push(...Object.values(this.backgroundSurfaces).map(s => s.uid));
+		globalNames.push(...Object.values(this.movableSurfaces).map(s => s.uid));
+		globalNames.push(...Object.values(this.liquidKinds).map(s => s.uid));
+		globalNames.push(...Object.values(this.teams).map(s => s.uid));
+		globalNames.push(...Object.values(this.skins).map(s => s.uid));
+		globalNames.push(...Object.values(this.aiPresets).map(s => s.uid));
 		if (globalNames.length > 0) {
 			pb3SourceCode += `var ${globalNames.join(', ')};`;
 		}

@@ -41,7 +41,7 @@ export const serializeTeam = (team: TeamEntity, worldBoundary: WorldBoundary) =>
             title: '${team.name}', 
             hud_color: new pb2HighRangeColor( 0x6a94ff ), 
             recolor_nicknames_on_overhead: true, 
-            friendly_fire: true, 
+            friendly_fire: false, 
             friendly_damage_multiplier: 1, 
             normal_damage_to_dead_teammates: true, 
             teammates_collide: ${teammatesCollide}, 
