@@ -9,26 +9,6 @@
     Therefore, for each unique combination of acid damage and actAsWater boolean, we need to create a liquid kind for it.
 */
 
-import type { Geometry } from '#utils/types.js';
-
-// ===============================================
-// PB2 Objects
-// ===============================================
-export interface PB2Water {
-	geometry: Geometry;
-	liquidIdentifier: LiquidIdentifierStr; // obtain it's corresponding PB3 liquid kind.
-}
-
-// ===============================================
-// Derived PB3 Objects
-// ===============================================
-export interface PB3LiquidKind {
-	uid: string;
-	count: number;
-	damage: number;
-	actAsWater: boolean;
-}
-
 // For each unique combination of acid damage + whether it acts as a water, we need to create a liquid kind for it.
 export interface LiquidIdentifier {
 	damage: number;

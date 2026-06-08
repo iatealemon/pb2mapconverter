@@ -12,6 +12,10 @@ export interface WorldBoundary {
 	max: Position;
 }
 
+export interface XLMParseOutput {
+	root: Record<string, ParsedPB2XMLObject[]>;
+}
+
 export interface ParsedPB2XMLObject {
 	$: Record<string, string>;
 }
