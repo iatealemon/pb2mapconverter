@@ -5,12 +5,12 @@
     triggers, etc..
 */
 import type { BooleanAsString, ParsedPB2XMLObject, WorldBoundary, XLMParseOutput } from '#utils/types.js';
-import type { SurfaceEntity, LiquidKindEntity, TeamEntity, WallEntity, BackgroundEntity, MovableEntity, WaterEntity, LampEntity, GunEntity } from '#pb2Objects/entity-types.js';
+import type { SurfaceEntity, LiquidKindEntity, TeamEntity, WallEntity, BackgroundEntity, MovableEntity, WaterEntity, LampEntity, GunEntity, CharacterEntity, SkinEntity, AIPresetEntity } from '#pb2Objects/entity-types.js';
 import { getBackgroundKey, type BackgroundIdentifierStr } from '#pb2Objects/surface.js';
 import { getLiquidKindKey, type LiquidIdentifierStr } from '#pb2Objects/liquid.js';
 
 import { parseGeometry, updateWorldBoundary } from '#utils/types.js';
-import { PB3StandardFooter, PB3StandardMapHeader } from '#serialize/serialize.js';
+import { PB3StandardFooter, PB3StandardMapHeader, serializeForceRegenScript } from '#serialize/serialize.js';
 import { serializeBox } from '#serialize/box.js';
 import { serializeSurface, SurfaceType } from '#serialize/surface.js';
 import { serializeLamp } from '#serialize/lamp.js';
@@ -20,6 +20,9 @@ import { serializeLiquidKind } from '#serialize/liquid.js';
 import { createPB2BackgroundSurface, createPB2MovableSurface_isVisible, createPB2WallSurface, pb2ShadowBackgroundMaterial } from '#pb2Objects/surface-map.js';
 import { createTeam } from '#pb2Objects/team.js';
 import { serializeTeam } from '#serialize/team.js';
+import { serializeSkin } from '#serialize/skin.js';
+import { serializeAIPreset } from '#serialize/ai-preset.js';
+import { serializeCharacter } from '#serialize/character.js';
 
 export class PB3Map {
 	// ============================================================================================
@@ -30,14 +33,17 @@ export class PB3Map {
 	private guns: GunEntity[] = [];
 	private waters: WaterEntity[] = [];
 	private movables: MovableEntity[] = [];
+	private characters: CharacterEntity[] = [];
 
 	// Derived PB3 Objects.. (assets, execute method, comments, etc..)
 	private wallSurfaces: Record<number, SurfaceEntity> = {}; 							// maps every unique PB2 wall material (an id) with a created wall surface.
 	private backgroundSurfaces: Record<BackgroundIdentifierStr, SurfaceEntity> = {}; 	// maps every unique PB2 background material + color mult with a created background surface.
 	private liquidKinds: Record<LiquidIdentifierStr, LiquidKindEntity> = {}; 			// maps every unique PB2 water property with a created liquid kind.
 	private movableSurfaces: Partial<Record<BooleanAsString, SurfaceEntity>> = {};		// maps every unique PB2 door "look" with a movable surface. (tbh there's only in/visible 
-																					    // but it's better to be consistent with the existing architecture.								
-	private teams: Record<number, TeamEntity> = {};                                     // maps every unique PB2 team number property with a created team.
+																						// but it's better to be consistent with the existing architecture.								
+	private teams: Record<number, TeamEntity> = {};										// maps every unique PB2 team number property with a created team.
+	private skins: Record<number, SkinEntity> = {};
+	private aiPresets: Record<number, AIPresetEntity> = {};
 	// Metadata
 	private worldBoundary: WorldBoundary = { min: { x: Infinity, y: Infinity }, max: { x: -Infinity, y: -Infinity } };
 	
@@ -68,6 +74,10 @@ export class PB3Map {
 					break;
 				case 'door':
 					this.movables = this.parsePB2Movable(parsedPB2Objects);
+					break;
+				case 'player':
+				case 'enemy':
+					this.characters.push(...this.parsePB2Character(parsedPB2Objects, pb2ObjectName === 'player'));
 					break;
 				default:
 					console.warn(`Encountered unknown / unsupported xml tag of ${pb2ObjectName}`);
@@ -110,6 +120,14 @@ export class PB3Map {
 			pb3SourceCode += serializeTeam(team, this.worldBoundary);
 		}
 
+		for (const [_, skin] of Object.entries(this.skins)) {
+			pb3SourceCode += serializeSkin(skin, this.worldBoundary);
+		}
+
+		for (const [_, ai] of Object.entries(this.aiPresets)) {
+			pb3SourceCode += serializeAIPreset(ai, this.worldBoundary);
+		}
+
 		// We then serialize object instances..
 		for (const wall of this.walls) {
 			pb3SourceCode += serializeBox({kind: "wall", entity: wall});
@@ -119,14 +137,6 @@ export class PB3Map {
 			pb3SourceCode += serializeBox({kind: "background", entity: background});
 		}
 
-		for (const lamp of this.lamps) {
-			pb3SourceCode += serializeLamp(lamp);
-		}
-
-		for (const gun of this.guns) {
-			pb3SourceCode += serializeGun(gun);
-		}
-		
 		for (const movable of this.movables) {
 			pb3SourceCode += serializeBox({kind: "movable", entity: movable});
 		}
@@ -134,6 +144,19 @@ export class PB3Map {
 		for (const water of this.waters) {
 			pb3SourceCode += serializeBox({kind: "water", entity: water});
 		}
+
+		for (const lamp of this.lamps) {
+			pb3SourceCode += serializeLamp(lamp);
+		}
+
+		for (const gun of this.guns) {
+			pb3SourceCode += serializeGun(gun);
+		}
+
+		for (const char of this.characters) {
+			pb3SourceCode += serializeCharacter(char);
+		}
+		pb3SourceCode += serializeForceRegenScript(0, this.worldBoundary.min.y + 50);
 
 		pb3SourceCode += PB3StandardFooter;
 		return pb3SourceCode;
@@ -194,6 +217,28 @@ export class PB3Map {
 			const count = Object.keys(this.teams).length;
 			entity = createTeam(teamNum, count);
 			this.teams[key] = entity;
+		}
+		return entity;
+	}
+
+	private getSkinForProps = (char: number): SkinEntity => {
+		const key = char;
+		let entity = this.skins[char];
+		if (entity === undefined) {
+			const count = Object.keys(this.skins).length;
+			entity = { uid: `skin${count}`, count, model: char };
+			this.skins[key] = entity;
+		}
+		return entity;
+	}
+
+	private getAIPresetForProps = (): AIPresetEntity => {
+		const key = 0;
+		let entity = this.aiPresets[key];
+		if (entity === undefined) {
+			const count = Object.keys(this.aiPresets).length;
+			entity = { uid: `aiPreset${count}`, count };
+			this.aiPresets[key] = entity;
 		}
 		return entity;
 	}
@@ -335,4 +380,27 @@ export class PB3Map {
 
 		return movables;
 	}
+
+	private parsePB2Character = (pb2Objects: ParsedPB2XMLObject[], isPlayer: boolean): CharacterEntity[] => {
+		const entities: CharacterEntity[] = pb2Objects.map(({$: props}) => {
+			const noBehaviour = Number(props.botaction ?? 0) === 4;
+			return {
+				position: {
+					x: Number(props.x ?? 0),
+					y: Number(props.y ?? 0),
+				},
+				velX: Number(props.tox ?? 0),
+				velY: Number(props.toy ?? 0),
+				hp: Number(props.hea ?? 130),
+				hpMax: Number(props.hmax ?? 130),
+				direction: Number(props.side) === -1 ? -1 : 1,
+				isPlayer: isPlayer,
+				teamUID: this.getTeamForProps(Number(props.team ?? -1)).uid,
+				skinUID: this.getSkinForProps(Number(props.char ?? 1)).uid,
+				aiPresetUID: noBehaviour ? null : this.getAIPresetForProps().uid,
+			} satisfies CharacterEntity;
+		});
+		entities.forEach(({position}) => updateWorldBoundary(this.worldBoundary, position));
+		return entities;
+	};
 }

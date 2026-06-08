@@ -27,6 +27,12 @@ export interface Geometry {
 	h: number;
 }
 
+/**
+ * -1 = left  
+ * 1 = right 
+ */
+export type Side = -1 | 1;
+
 // Adjusts the given world boundary if a given point lies outside the boundary. (mutates but i like returning for clarity)
 export const updateWorldBoundary = (worldBoundary: WorldBoundary, point: Position): WorldBoundary => {
 	worldBoundary.min.x = Math.min(worldBoundary.min.x, point.x);

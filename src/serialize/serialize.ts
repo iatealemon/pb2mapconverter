@@ -28,3 +28,19 @@ export const toPB3String = ({ code, jsonObject }: { code: string; jsonObject: st
 
 	return finalString;
 };
+
+export const serializeForceRegenScript = (x: number, y: number): string => {
+    // starts regen if the character was created with less hp than max
+    const code = 'pb2Character.characters.filter(c=>c.hea!==c.hmax&&c.hea>0).forEach(c=>c.SubstractHealth(0));';
+    const editor_object = {
+        "operation":"code",
+        "snippet_color":"0xb1b1ff",
+        "code":code,
+        "x":x.toString(),
+        "y":y.toString(),
+        "_visible":"1",
+        "_locked":"0",
+        "_disabled":"0"
+    };
+    return toPB3String({ code: code, jsonObject: JSON.stringify(editor_object) });
+};
