@@ -18,7 +18,6 @@ export const teamNames: Record<number, string> = {
     14: 'Green Team',
     15: 'White Team',
     16: 'Black Team',
-    [-1]: 'Special A',
     [-2]: 'Special B',
     [-3]: 'Special C',
     [-4]: 'Special D',
@@ -29,7 +28,7 @@ export const teamNames: Record<number, string> = {
 export const createTeam = (teamNum: number, count: number): TeamEntity => {
     return {
         uid: `team${count}`,
-        name: teamNames[teamNum] ?? 'Unknown team',
+        name: teamNames[teamNum] ?? `Team ${teamNum}`,
         count,
     };
 }

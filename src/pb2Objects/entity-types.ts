@@ -67,5 +67,5 @@ export interface GunEntity {
     model: string;
     team: number;
     upgrade: number;
-    teamUID: string; // pb3 property
+    teamUID: string | null; // pb3 property
 }

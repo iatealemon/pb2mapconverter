@@ -19,6 +19,7 @@ import { doubleColor, hexToColor, isValidHexCode, whiteColor, type Color } from 
 import { serializeLiquidKind } from '#serialize/liquid.js';
 import { createPB2BackgroundSurface, createPB2MovableSurface_isVisible, createPB2WallSurface, pb2ShadowBackgroundMaterial } from '#pb2Objects/surface-map.js';
 import { createTeam } from '#pb2Objects/team.js';
+import { serializeTeam } from '#serialize/team.js';
 
 export class PB3Map {
 	// ============================================================================================
@@ -36,7 +37,7 @@ export class PB3Map {
 	private liquidKinds: Record<LiquidIdentifierStr, LiquidKindEntity> = {}; 			// maps every unique PB2 water property with a created liquid kind.
 	private movableSurfaces: Partial<Record<BooleanAsString, SurfaceEntity>> = {};		// maps every unique PB2 door "look" with a movable surface. (tbh there's only in/visible 
 																					    // but it's better to be consistent with the existing architecture.								
-	private teams: Record<number, TeamEntity> = {};
+	private teams: Record<number, TeamEntity> = {};                                     // maps every unique PB2 team number property with a created team.
 	// Metadata
 	private worldBoundary: WorldBoundary = { min: { x: Infinity, y: Infinity }, max: { x: -Infinity, y: -Infinity } };
 	
@@ -59,9 +60,9 @@ export class PB3Map {
 				case 'lamp':
 					this.lamps = this.parsePB2Lamp(parsedPB2Objects);
 					break;
-				/*case 'gun':
+				case 'gun':
 					this.guns = this.parsePB2Gun(parsedPB2Objects);
-					break;*/
+					break;
 				case 'water':
 					this.waters = this.parsePB2Water(parsedPB2Objects);
 					break;
@@ -103,6 +104,10 @@ export class PB3Map {
 
 		for (const [_, liquidKind] of Object.entries(this.liquidKinds)) {
 			pb3SourceCode += serializeLiquidKind(liquidKind, this.worldBoundary);
+		}
+
+		for (const [_, team] of Object.entries(this.teams)) {
+			pb3SourceCode += serializeTeam(team, this.worldBoundary);
 		}
 
 		// We then serialize object instances..
@@ -186,7 +191,7 @@ export class PB3Map {
 		const key = teamNum;
 		let entity = this.teams[key];
 		if (entity === undefined) {
-			const count = Object.keys(this.backgroundSurfaces).length;
+			const count = Object.keys(this.teams).length;
 			entity = createTeam(teamNum, count);
 			this.teams[key] = entity;
 		}
@@ -275,6 +280,7 @@ export class PB3Map {
 	private parsePB2Gun = (pb2Objects: ParsedPB2XMLObject[]): GunEntity[] => {
 		const guns: GunEntity[] = pb2Objects.map(({$: props}) => {
 			const teamNum = Number(props.command ?? -1);
+			const isAnyTeam = teamNum === -1;
 			return {
 				position: {
 					x: Number(props.x ?? 0),
@@ -283,7 +289,7 @@ export class PB3Map {
 				model: props.model ?? '', // default = omit
 				team: teamNum,
 				upgrade: Number(props.upg ?? 0),
-				teamUID: this.getTeamForProps(teamNum).uid,
+				teamUID: isAnyTeam ? null : this.getTeamForProps(teamNum).uid,
 			}
 		});
 		guns.forEach(({position}) => updateWorldBoundary(this.worldBoundary, position));
