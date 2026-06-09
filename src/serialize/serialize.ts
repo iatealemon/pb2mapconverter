@@ -29,9 +29,21 @@ export const toPB3String = ({ code, jsonObject }: { code: string; jsonObject: st
 	return finalString;
 };
 
+/** script that starts regen if the character was created with less hp than max */
 export const serializeForceRegenScript = (x: number, y: number): string => {
-    // starts regen if the character was created with less hp than max
-    const code = 'pb2Character.characters.filter(c=>c.hea!==c.hmax&&c.hea>0).forEach(c=>c.SubstractHealth(0));';
+    return makeScript(x, y, 'pb2Character.characters.filter(c=>c.hea!==c.hmax&&c.hea>0).forEach(c=>c.SubstractHealth(0));')
+};
+
+/** script that configures map settings to be closer to pb2 */
+export const serializeMapConfigureScript = (x: number, y: number): string => {
+    let code = '';
+    code += 'pb2GunDisposer.normal_time_to_live=Infinity;';
+    code += 'pb2RagdollDisposer.normal_time_to_live=Infinity;'; // todo omit if force ragdoll disappear engine mark
+    code += 'pb2Bullet.friction_wall=0.5;'; // similar bullet penetration as pb2
+    return makeScript(x, y, code);
+};
+
+export const makeScript = (x: number, y: number, code: string): string => {
     const editor_object = {
         "operation":"code",
         "snippet_color":"0xb1b1ff",
@@ -43,4 +55,4 @@ export const serializeForceRegenScript = (x: number, y: number): string => {
         "_disabled":"0"
     };
     return toPB3String({ code: code, jsonObject: JSON.stringify(editor_object) });
-};
+}

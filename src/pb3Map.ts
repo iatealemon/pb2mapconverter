@@ -10,7 +10,7 @@ import { getBackgroundKey, type BackgroundIdentifierStr } from '#pb2Objects/surf
 import { getLiquidKindKey, type LiquidIdentifierStr } from '#pb2Objects/liquid.js';
 
 import { parseGeometry, updateWorldBoundary } from '#utils/math.js';
-import { PB3StandardFooter, PB3StandardMapHeader, serializeForceRegenScript } from '#serialize/serialize.js';
+import { PB3StandardFooter, PB3StandardMapHeader, serializeForceRegenScript, serializeMapConfigureScript } from '#serialize/serialize.js';
 import { serializeBox } from '#serialize/box.js';
 import { serializeSurface, SurfaceType } from '#serialize/surface.js';
 import { serializeLamp } from '#serialize/lamp.js';
@@ -104,6 +104,8 @@ export class PB3Map {
 
 		pb3SourceCode += PB3StandardMapHeader;
 
+		pb3SourceCode += serializeMapConfigureScript(this.worldBoundary.min.x + 50, this.worldBoundary.min.y);
+
 		// Order matters.. we first serialize "assets" like objects..
 		for (const [_, wallSurface] of Object.entries(this.wallSurfaces)) {
 			pb3SourceCode += serializeSurface(wallSurface, SurfaceType.Wall, this.worldBoundary);
@@ -161,7 +163,7 @@ export class PB3Map {
 		for (const char of this.characters) {
 			pb3SourceCode += serializeCharacter(char);
 		}
-		pb3SourceCode += serializeForceRegenScript(0, this.worldBoundary.min.y + 50);
+		pb3SourceCode += serializeForceRegenScript(this.worldBoundary.min.x, this.worldBoundary.min.y);
 
 		pb3SourceCode += PB3StandardFooter;
 		return pb3SourceCode;
