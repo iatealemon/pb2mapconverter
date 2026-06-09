@@ -9,7 +9,7 @@ import type { SurfaceEntity, LiquidKindEntity, TeamEntity, WallEntity, Backgroun
 import { getBackgroundKey, type BackgroundIdentifierStr } from '#pb2Objects/surface.js';
 import { getLiquidKindKey, type LiquidIdentifierStr } from '#pb2Objects/liquid.js';
 
-import { parseGeometry, updateWorldBoundary } from '#utils/types.js';
+import { parseGeometry, updateWorldBoundary } from '#utils/math.js';
 import { PB3StandardFooter, PB3StandardMapHeader, serializeForceRegenScript } from '#serialize/serialize.js';
 import { serializeBox } from '#serialize/box.js';
 import { serializeSurface, SurfaceType } from '#serialize/surface.js';
