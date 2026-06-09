@@ -1,11 +1,7 @@
 import type { SurfaceEntity } from '#pb2Objects/entity-types.js';
-import type { WorldBoundary } from '#utils/types.js';
 
 import { blackColor, colorToPB2Hex, multiplyColor, pb2BlueColor, pb2GreenColor, pb2RedColor, type Color } from '#utils/color.js';
 import { toPB3String } from './serialize.js';
-
-const editorIconWidth = 50;
-const editorIconHeight = 50;
 
 // Modern TS way of defining an enum.
 export const SurfaceType = {
@@ -16,7 +12,7 @@ export const SurfaceType = {
 
 type SurfaceT = (typeof SurfaceType)[keyof typeof SurfaceType];
 
-export const serializeSurface = (surface: SurfaceEntity, surfaceType: SurfaceT, worldBoundary: WorldBoundary) => {
+export const serializeSurface = (surface: SurfaceEntity, surfaceType: SurfaceT, x: number, y: number) => {
 	// Different types of surface (wall, background and movable) have different parameters.
 	// We calculate the appropriate parameter here.
 
@@ -48,30 +44,10 @@ export const serializeSurface = (surface: SurfaceEntity, surfaceType: SurfaceT, 
 			break;
 	}
 
-	// We calculate an appropriate coordinate to place our surface editor objects. We shall place them at the top left corner of
-	// the world boundary, row by row.
-	let heightPaddingMultplier = 1;
-
-	switch (surfaceType) {
-		case SurfaceType.Wall:
-			heightPaddingMultplier = 3;
-			break;
-		case SurfaceType.Background:
-			heightPaddingMultplier = 2;
-			break;
-		default:
-			// it's movable. keep default value.
-			break;
-	}
-
-	// Count is used to dynamically calculate appropriate position and name, laying it out in a nice fashion..
-	const posX = worldBoundary.min.x + editorIconWidth * surface.count;
-	const posY = worldBoundary.min.y - editorIconHeight * heightPaddingMultplier;
-
 	// Both movables and walls needs to set parameter to be true. (according to PB3 that is)
 	const is_for_wall = surfaceType === SurfaceType.Wall || surfaceType === SurfaceType.Movable;
 
-	return _serializeSurface(surface, toGenerateTerrain, colorMultiplier, is_for_wall, surfaceTerrain, posX, posY);
+	return _serializeSurface(surface, toGenerateTerrain, colorMultiplier, is_for_wall, surfaceTerrain, x, y);
 };
 
 const _serializeSurface = (

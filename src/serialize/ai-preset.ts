@@ -1,9 +1,5 @@
 import type { AIPresetEntity } from '#pb2Objects/entity-types.js';
-import type { WorldBoundary } from '#utils/types.js';
 import { toPB3String } from './serialize.js';
-
-const editorIconWidth = 50;
-const editorIconHeight = 50;
 
 const DEFAULT_EDITOR_OBJECT = {
     "operation":"create",
@@ -28,13 +24,7 @@ const DEFAULT_EDITOR_OBJECT = {
     "sequence_behavior":"pb2AIModule.SEQUENCE_BEHAVIOR_SERIOUS"
 };
 
-export const serializeAIPreset = (entity: AIPresetEntity, worldBoundary: WorldBoundary) => {
-    // Index is used to dynamically calculate appropriate position and name, laying it out in a nice fashion..
-    const posX = worldBoundary.min.x + editorIconWidth * entity.count;
-
-    const heightPaddingMultplier = 7;
-    const posY = worldBoundary.min.y - editorIconHeight * heightPaddingMultplier;
-
+export const serializeAIPreset = (entity: AIPresetEntity, x: number, y: number) => {
     // better but not good. npcs still see too far
     // these will probably be changed
     const hunt_random_known_threats_range = 200;
@@ -60,8 +50,8 @@ export const serializeAIPreset = (entity: AIPresetEntity, worldBoundary: WorldBo
     const editor_object = {
         ...DEFAULT_EDITOR_OBJECT,
         id: entity.uid,
-        x: posX.toString(),
-        y: posY.toString(),
+        x: x.toString(),
+        y: y.toString(),
         hunt_random_known_threats_range: hunt_random_known_threats_range.toString(),
         hear_range: hear_range.toString(),
     };

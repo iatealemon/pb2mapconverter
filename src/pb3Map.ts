@@ -104,35 +104,61 @@ export class PB3Map {
 
 		pb3SourceCode += PB3StandardMapHeader;
 
-		pb3SourceCode += serializeMapConfigureScript(this.worldBoundary.min.x + 50, this.worldBoundary.min.y);
+		// coordinate variables for pb3 data entities such as surface
+		// they're placed in rows upward from the top-left corner
+		const iconWidth = 50;
+		const iconHeight = 50;
+		const dy = {
+			"script": 			-1 * iconHeight,
+			"surfaceMovable": 	-2 * iconHeight,
+			"surfaceBg": 		-3 * iconHeight,
+			"surfaceWall": 		-4 * iconHeight,
+			"liquidKind": 		-5 * iconHeight,
+			"team": 			-6 * iconHeight,
+			"skin": 			-7 * iconHeight,
+			"aiPreset": 		-8 * iconHeight,
+		} as const;
+		// top-left corner
+		const ox = this.worldBoundary.min.x;
+		const oy = this.worldBoundary.min.y;
+		let script_i = 0;
+
+		pb3SourceCode += serializeMapConfigureScript(ox + iconWidth * script_i++, oy + dy.script);
 
 		// Order matters.. we first serialize "assets" like objects..
-		for (const [_, wallSurface] of Object.entries(this.wallSurfaces)) {
-			pb3SourceCode += serializeSurface(wallSurface, SurfaceType.Wall, this.worldBoundary);
+		for (const [_, surface] of Object.entries(this.wallSurfaces)) {
+			const [x, y] = [ox + surface.count * iconWidth, oy + dy.surfaceWall];
+			pb3SourceCode += serializeSurface(surface, SurfaceType.Wall, x, y);
 		}
 
-		for (const [_, backgroundSurface] of Object.entries(this.backgroundSurfaces)) {
-			pb3SourceCode += serializeSurface(backgroundSurface, SurfaceType.Background, this.worldBoundary);
+		for (const [_, surface] of Object.entries(this.backgroundSurfaces)) {
+			const [x, y] = [ox + surface.count * iconWidth, oy + dy.surfaceBg];
+			pb3SourceCode += serializeSurface(surface, SurfaceType.Background, x, y);
 		}
 
-		for (const [_, movableSurface] of Object.entries(this.movableSurfaces)) {
-			pb3SourceCode += serializeSurface(movableSurface, SurfaceType.Movable, this.worldBoundary);
+		for (const [_, surface] of Object.entries(this.movableSurfaces)) {
+			const [x, y] = [ox + surface.count * iconWidth, oy + dy.surfaceMovable];
+			pb3SourceCode += serializeSurface(surface, SurfaceType.Movable, x, y);
 		}
 
 		for (const [_, liquidKind] of Object.entries(this.liquidKinds)) {
-			pb3SourceCode += serializeLiquidKind(liquidKind, this.worldBoundary);
+			const [x, y] = [ox + liquidKind.count * iconWidth, oy + dy.liquidKind];
+			pb3SourceCode += serializeLiquidKind(liquidKind, x, y);
 		}
 
 		for (const [_, team] of Object.entries(this.teams)) {
-			pb3SourceCode += serializeTeam(team, this.worldBoundary);
+			const [x, y] = [ox + team.count * iconWidth, oy + dy.team];
+			pb3SourceCode += serializeTeam(team, x, y);
 		}
 
 		for (const [_, skin] of Object.entries(this.skins)) {
-			pb3SourceCode += serializeSkin(skin, this.worldBoundary);
+			const [x, y] = [ox + skin.count * iconWidth, oy + dy.skin];
+			pb3SourceCode += serializeSkin(skin, x, y);
 		}
 
 		for (const [_, ai] of Object.entries(this.aiPresets)) {
-			pb3SourceCode += serializeAIPreset(ai, this.worldBoundary);
+			const [x, y] = [ox + ai.count * iconWidth, oy + dy.aiPreset];
+			pb3SourceCode += serializeAIPreset(ai, x, y);
 		}
 
 		// We then serialize object instances..
@@ -163,7 +189,9 @@ export class PB3Map {
 		for (const char of this.characters) {
 			pb3SourceCode += serializeCharacter(char);
 		}
-		pb3SourceCode += serializeForceRegenScript(this.worldBoundary.min.x, this.worldBoundary.min.y);
+		pb3SourceCode += serializeForceRegenScript(ox + iconWidth * script_i++, oy + dy.script);
+
+		void script_i; // silence useless assignment
 
 		pb3SourceCode += PB3StandardFooter;
 		return pb3SourceCode;

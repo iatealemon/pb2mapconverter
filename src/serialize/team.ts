@@ -1,9 +1,5 @@
 import type { TeamEntity } from '#pb2Objects/entity-types.js';
-import type { WorldBoundary } from '#utils/types.js';
 import { toPB3String } from './serialize.js';
-
-const editorIconWidth = 50;
-const editorIconHeight = 50;
 
 const DEFAULT_EDITOR_OBJECT = {
     "operation":"create",
@@ -26,13 +22,7 @@ const DEFAULT_EDITOR_OBJECT = {
     "_disabled":"0"
 };
 
-export const serializeTeam = (team: TeamEntity, worldBoundary: WorldBoundary) => {
-    // Index is used to dynamically calculate appropriate position and name, laying it out in a nice fashion..
-    const posX = worldBoundary.min.x + editorIconWidth * team.count;
-
-    const heightPaddingMultplier = 5;
-    const posY = worldBoundary.min.y - editorIconHeight * heightPaddingMultplier;
-
+export const serializeTeam = (team: TeamEntity, x: number, y: number) => {
     const teammatesCollide = team.name !== 'Alpha';
 
     const code = `
@@ -57,8 +47,8 @@ export const serializeTeam = (team: TeamEntity, worldBoundary: WorldBoundary) =>
         title: `'${team.name}'`,
         friendly_fire: "false",
         teammates_collide: teammatesCollide.toString(),
-        x: posX.toString(),
-        y: posY.toString(),
+        x: x.toString(),
+        y: y.toString(),
     };
 
     return toPB3String({ code: code, jsonObject: JSON.stringify(editor_object) });
