@@ -28,7 +28,8 @@ export interface TeamEntity {
 export interface SkinEntity {
 	uid: string;
 	count: number;
-	model: number;
+	pb2Model: number;
+	pb3Model: number;
 }
 
 export interface AIPresetEntity {
@@ -76,7 +77,8 @@ export interface LampEntity {
 
 export interface GunEntity {
     position: Position;
-    model: string;
+	pb2Model: string;
+	pb3Model: string;
     team: number;
     upgrade: number;
     teamUID: string | null; // pb3 property

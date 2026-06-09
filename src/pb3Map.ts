@@ -18,11 +18,11 @@ import { serializeGun } from '#serialize/gun.js';
 import { doubleColor, hexToColor, isValidHexCode, whiteColor, type Color } from '#utils/color.js';
 import { serializeLiquidKind } from '#serialize/liquid.js';
 import { createPB2BackgroundSurface, createPB2MovableSurface_isVisible, createPB2WallSurface, pb2ShadowBackgroundMaterial } from '#pb2Objects/surface-map.js';
-import { createTeam } from '#pb2Objects/team.js';
 import { serializeTeam } from '#serialize/team.js';
 import { serializeSkin } from '#serialize/skin.js';
 import { serializeAIPreset } from '#serialize/ai-preset.js';
 import { serializeCharacter } from '#serialize/character.js';
+import { PB2GunModelToPB3, PB2SkinToPB3, teamNames } from '#pb2Objects/special-values.js';
 
 export class PB3Map {
 	// ============================================================================================
@@ -220,18 +220,29 @@ export class PB3Map {
 		let entity = this.teams[key];
 		if (entity === undefined) {
 			const count = Object.keys(this.teams).length;
-			entity = createTeam(teamNum, count);
+			entity = {
+				uid: `team${count}`,
+				name: teamNames[teamNum] ?? `Team ${teamNum}`,
+				count,
+			};
 			this.teams[key] = entity;
 		}
 		return entity;
 	}
 
 	private getSkinForProps = (char: number): SkinEntity => {
-		const key = char;
-		let entity = this.skins[char];
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const pb3Model = PB2SkinToPB3[char] ?? PB2SkinToPB3[1]!; // marine by default
+		const key = pb3Model;
+		let entity = this.skins[key];
 		if (entity === undefined) {
 			const count = Object.keys(this.skins).length;
-			entity = { uid: `skin${count}`, count, model: char };
+			entity = {
+				uid: `skin${count}`,
+				count,
+				pb2Model: char,
+				pb3Model,
+			}
 			this.skins[key] = entity;
 		}
 		return entity;
@@ -328,20 +339,28 @@ export class PB3Map {
 	};
 
 	private parsePB2Gun = (pb2Objects: ParsedPB2XMLObject[]): GunEntity[] => {
-		const guns: GunEntity[] = pb2Objects.map(({$: props}) => {
+		const guns: GunEntity[] = [];
+		for (const {$: props} of pb2Objects) {
 			const teamNum = Number(props.command ?? -1);
 			const isAnyTeam = teamNum === -1;
-			return {
+			const pb2Model = props.model ?? ''; // default = omit
+			const pb3Model = PB2GunModelToPB3[pb2Model] ?? null;
+			
+			// skip nonexistent models
+			if (pb3Model === null) continue;
+
+			guns.push({
 				position: {
 					x: Number(props.x ?? 0),
 					y: Number(props.y ?? 0),
 				},
-				model: props.model ?? '', // default = omit
+				pb2Model,
+				pb3Model,
 				team: teamNum,
 				upgrade: Number(props.upg ?? 0),
 				teamUID: isAnyTeam ? null : this.getTeamForProps(teamNum).uid,
-			}
-		});
+			} satisfies GunEntity);
+		}
 		guns.forEach(({position}) => updateWorldBoundary(this.worldBoundary, position));
 		return guns;
 	};
