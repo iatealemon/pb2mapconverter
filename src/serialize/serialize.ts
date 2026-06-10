@@ -54,5 +54,6 @@ export const makeScript = (x: number, y: number, code: string): string => {
         "_locked":"0",
         "_disabled":"0"
     };
-    return toPB3String({ code: code, jsonObject: JSON.stringify(editor_object) });
+    return `${code}//->Ditto->//${JSON.stringify(editor_object)}\n`;
+    //return toPB3String({ code: code, jsonObject: JSON.stringify(editor_object) });
 }
