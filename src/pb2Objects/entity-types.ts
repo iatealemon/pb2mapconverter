@@ -38,6 +38,11 @@ export interface AIPresetEntity {
 	// is there anything that should be changed from defaults?
 }
 
+export interface PointEntity {
+	uid: string;
+	position: Position;
+}
+
 // ===============================================
 // PB2/PB3 Objects
 // ===============================================

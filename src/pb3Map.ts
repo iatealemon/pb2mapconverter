@@ -5,7 +5,7 @@
     triggers, etc..
 */
 import type { BooleanAsString, ParsedPB2XMLObject, WorldBoundary, XLMParseOutput } from '#utils/types.js';
-import type { SurfaceEntity, LiquidKindEntity, TeamEntity, WallEntity, BackgroundEntity, MovableEntity, WaterEntity, LampEntity, GunEntity, CharacterEntity, SkinEntity, AIPresetEntity } from '#pb2Objects/entity-types.js';
+import type { SurfaceEntity, LiquidKindEntity, TeamEntity, WallEntity, BackgroundEntity, MovableEntity, WaterEntity, LampEntity, GunEntity, CharacterEntity, SkinEntity, AIPresetEntity, PointEntity } from '#pb2Objects/entity-types.js';
 import { getBackgroundKey, type BackgroundIdentifierStr } from '#pb2Objects/surface.js';
 import { getLiquidKindKey, type LiquidIdentifierStr } from '#pb2Objects/liquid.js';
 
@@ -22,7 +22,9 @@ import { serializeTeam } from '#serialize/team.js';
 import { serializeSkin } from '#serialize/skin.js';
 import { serializeAIPreset } from '#serialize/ai-preset.js';
 import { serializeCharacter } from '#serialize/character.js';
-import { PB2GunModelToPB3, PB2SkinToPB3, teamNames } from '#pb2Objects/special-values.js';
+import { PB2GunModelToPB3, PB2GunModelToPB3Gadget, PB2SkinToPB3, teamNames } from '#pb2Objects/special-values.js';
+import { serializePoint } from '#serialize/point.js';
+import { getGrenadeSpawnPointUID, serializeSpawnGrenadesScript } from '#serialize/grenade.js';
 
 export class PB3Map {
 	// ============================================================================================
@@ -44,8 +46,10 @@ export class PB3Map {
 	private teams: Record<number, TeamEntity> = {};										// maps every unique PB2 team number property with a created team.
 	private skins: Record<number, SkinEntity> = {};
 	private aiPresets: Record<number, AIPresetEntity> = {};
+	private points: PointEntity[] = [];
 	// Metadata
 	private worldBoundary: WorldBoundary = { min: { x: Infinity, y: Infinity }, max: { x: -Infinity, y: -Infinity } };
+	private hasGrenades = false;
 	
 	// ============================================================================================
 
@@ -98,6 +102,7 @@ export class PB3Map {
 		globalNames.push(...Object.values(this.teams).map(s => s.uid));
 		globalNames.push(...Object.values(this.skins).map(s => s.uid));
 		globalNames.push(...Object.values(this.aiPresets).map(s => s.uid));
+		globalNames.push(...this.points.map(s => s.uid));
 		if (globalNames.length > 0) {
 			pb3SourceCode += `var ${globalNames.join(', ')};`;
 		}
@@ -161,6 +166,10 @@ export class PB3Map {
 			pb3SourceCode += serializeAIPreset(ai, x, y);
 		}
 
+		for (const point of this.points) {
+			pb3SourceCode += serializePoint(point);
+		}
+
 		// We then serialize object instances..
 		for (const wall of this.walls) {
 			pb3SourceCode += serializeBox({kind: "wall", entity: wall});
@@ -190,6 +199,10 @@ export class PB3Map {
 			pb3SourceCode += serializeCharacter(char);
 		}
 		pb3SourceCode += serializeForceRegenScript(ox + iconWidth * script_i++, oy + dy.script);
+
+		if (this.hasGrenades) {
+			pb3SourceCode += serializeSpawnGrenadesScript(ox + iconWidth * script_i++, oy + dy.script);
+		}
 
 		void script_i; // silence useless assignment
 
@@ -370,20 +383,33 @@ export class PB3Map {
 
 	private parsePB2Gun = (pb2Objects: ParsedPB2XMLObject[]): GunEntity[] => {
 		const guns: GunEntity[] = [];
+		const grenadeModels = ['item_grenade', 'item_port', 'item_shield'];
+		let grenadeCount = 0;
 		for (const {$: props} of pb2Objects) {
 			const teamNum = Number(props.command ?? -1);
 			const isAnyTeam = teamNum === -1;
 			const pb2Model = props.model ?? ''; // default = omit
+			const isGrenade = grenadeModels.includes(pb2Model);
+
+			const position = {
+				x: Number(props.x ?? 0),
+				y: Number(props.y ?? 0),
+			};
+
+			if (isGrenade) {
+				this.points.push({
+					uid: getGrenadeSpawnPointUID(grenadeCount++, PB2GunModelToPB3Gadget[pb2Model] ?? "null"),
+					position,
+				});
+				this.hasGrenades = true;
+				continue;
+			}
+
 			const pb3Model = PB2GunModelToPB3[pb2Model] ?? null;
-			
-			// skip nonexistent models
-			if (pb3Model === null) continue;
+			if (pb3Model === null) continue; // skip nonexistent models
 
 			guns.push({
-				position: {
-					x: Number(props.x ?? 0),
-					y: Number(props.y ?? 0),
-				},
+				position,
 				pb2Model,
 				pb3Model,
 				team: teamNum,

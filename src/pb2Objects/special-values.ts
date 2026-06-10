@@ -136,3 +136,9 @@ export const PB2SkinToPB3: Record<number, number | null> = {
     17 // Digits
     */
 };
+
+export const PB2GunModelToPB3Gadget: Record<string, string> = {
+    'item_grenade': 'HE', // pb2ArmsAction.ACTION_TYPE_THROW_GRENADE_HE
+    'item_port': 'PORT', // pb2ArmsAction.ACTION_TYPE_THROW_GRENADE_PORT
+    'item_shield': 'SHIELD', // pb2ArmsAction.ACTION_TYPE_THROW_GRENADE_SHIELD
+};
